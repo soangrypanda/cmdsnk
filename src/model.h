@@ -9,13 +9,15 @@ struct snk_prt {
     struct snk_prt *next;
 };
 
-enum brd_symb { brdr='/', obstcl='*', food='^' };        
+enum brd_symb { empty = ' ', brdr='/', obstcl='*', food='^' };        
 struct board {
     enum brd_symb **brd;
-    int w, h;
+    int w, h, cells_n;
 };
 
 void init_ncurses(void);
 void init_board(struct board *brd);
+void add_brdrs_2_brd(struct board *brd);
+void set_brd_2_0(struct board *brd);
 void init_snake(struct snk_prt *snk, int y, int x);
 #endif
