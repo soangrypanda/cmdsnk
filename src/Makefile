@@ -1,4 +1,4 @@
-SRCMODULES = model.c
+SRCMODULES = model.c scene.c
 OBJMODULES = $(SRCMODULES:.c=.o)
 CFLAGS = -g -Wall
 CLIBS = -lncurses
@@ -10,4 +10,4 @@ cmd_snk: main.c $(OBJMODULES)
 	$(CC) $(CFLAGS) $^ -o $@ $(CLIBS)
 
 clean:
-	rm -f *.o
+	rm -f *.o cmd_snk

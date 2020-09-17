@@ -1,6 +1,7 @@
 #ifndef CMDSNK_MODEL_H_SENTRY
 #define CMDSNK_MODEL_H_SENTRY
 
+#include "scene.h"
 
 enum bdy_symb { head='H' , body='@' };
 struct snk_prt {
@@ -18,6 +19,6 @@ struct board {
 void init_ncurses(void);
 void init_board(struct board *brd);
 void add_brdrs_2_brd(struct board *brd);
-void set_brd_2_0(struct board *brd);
+void set_brd(struct board *brd, enum brd_symb symb);
 void init_snake(struct snk_prt *snk, int y, int x);
 #endif

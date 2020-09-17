@@ -30,11 +30,11 @@ void init_snake(struct snk_prt *snk, int y, int x)
     snk->next = NULL;
 }
 
-void set_brd_2_0(struct board *brd)
+void set_brd(struct board *brd, enum brd_symb symb)
 {
     for(int i=0, w=brd->w; i<w; i++) {
         for(int j=0, h=brd->h; j < h; j++) {
-            brd->brd[i][j] = empty; 
+            brd->brd[i][j] = symb; 
         }
     }
 }
