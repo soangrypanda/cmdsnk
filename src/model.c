@@ -13,19 +13,20 @@ void init_ncurses(void)
     curs_set(0);
 }
 
-void init_board(struct board *brd)
+void init_board(struct board *brd, int y, int x)
 {
+    brd->h = y;
+    brd->w = x;
     brd->brd = malloc(brd->w*sizeof(*brd->brd));        
     for(int i = 0, w = brd->w; i < w; i++) {
         brd->brd[i] = malloc(brd->h*sizeof(**brd->brd)); 
     }
-    brd->cells_n = brd->w * brd->h;
 }
 
 void init_snake(struct snk_prt *snk, int y, int x)
 {
-    snk->y = y / 2;
-    snk->x = x / 2;
+    snk->y = snk->prev_y = y / 2;
+    snk->x = snk->prev_x = x / 2;
     snk->bdy = head;
     snk->next = NULL;
 }
