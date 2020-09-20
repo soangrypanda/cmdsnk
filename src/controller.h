@@ -11,6 +11,7 @@
 void move_snk(struct snk_prt *snk, int off_y, int off_x);
 void snk_move_handler(struct board *brd, struct snk_prt *snk, int off_y, int off_x);
 void game_handler(struct board *brd, struct snk_prt *snk, char key);
+void main_key_handler(struct game_info *gi, char key);
 
 
 #endif

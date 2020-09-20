@@ -2,8 +2,9 @@
 
 static void set_main_m(struct scene *scene, int y, int x);
 
-void set_scenes(struct scene *scenes, int y, int x)
+struct scene * set_scenes(int y, int x)
 {
+    struct scene *scenes = malloc(sizeof(*scenes) * SCENES_NUM);
     for(enum scene_t i=0; i < SCENES_NUM; i++) {
         switch(i) {
             case main_m:
@@ -17,6 +18,7 @@ void set_scenes(struct scene *scenes, int y, int x)
                 return;
         }
     }
+    return scenes;
 }
 static void set_main_m(struct scene *scene, int y, int x)
 {

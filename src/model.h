@@ -3,7 +3,7 @@
 
 #include "scene.h"
 
-struct game {
+struct game_info {
     enum scene_t state;
     struct snk_prt *snk;
     struct board *brd;
@@ -23,8 +23,9 @@ struct board {
 };
 
 void init_ncurses(void);
-void init_board(struct board *brd, int y, int x);
+struct board * init_board(int y, int x);
 void add_brdrs_2_brd(struct board *brd);
 void set_brd(struct board *brd, enum brd_symb symb);
-void init_snake(struct snk_prt *snk, int y, int x);
+struct snk_prt * init_snake(int y, int x);
+struct game_info * init_game_info(void);
 #endif

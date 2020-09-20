@@ -12,6 +12,6 @@ struct scene {
         int y, x;
 };
 
-void set_scenes(struct scene *scenes, int y, int x);
+struct scene * set_scenes(int y, int x);
     
 #endif

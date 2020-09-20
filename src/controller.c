@@ -36,7 +36,28 @@ void game_handler(struct board *brd, struct snk_prt *snk, char key)
     switch(key) {
         case 'l':
         case 'd':
+            snk_move_handler(brd, snk, MOVE_RIGHT);
+            break;
+        case 'h':
+        case 'a':
             snk_move_handler(brd, snk, MOVE_LEFT);
             break;
+        case 'k':
+        case 'w':
+            snk_move_handler(brd, snk, MOVE_UP);
+            break;
+        case 'j':
+        case 's':
+            snk_move_handler(brd, snk, MOVE_DOWN); 
+            break;
     }    
+}
+
+void main_key_handler(struct game_info *gi, char key)
+{
+    switch(gi->state) {
+        case(game):
+            game_handler(gi->brd, gi->snk, key);
+            break; 
+    }
 }

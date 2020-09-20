@@ -6,49 +6,33 @@
 
 int main(void)
 {
-    int key, y, x;
-    struct board *brd1 = malloc(sizeof(*brd1));
-    struct snk_prt *snk1 = malloc(sizeof(*snk1));
-
     init_ncurses();
-    getmaxyx(stdscr, y, x);
-    brd1->h = y;
-    brd1->w = x; 
-    init_board(brd1, y, x);
-    init_snake(snk1, y, x);
-
-     
-    int w = brd1->w;
-    int h = brd1->h; 
- 
-    set_brd(brd1, empty);
-    add_brdrs_2_brd(brd1);
-    enum brd_symb **brdtst = brd1->brd; 
-
-    for(int i=0; i < w ; i++) {
-        for(int j=0; j < h; j++) {
+    struct game_info *gi = init_game_info();
+    struct snk_prt *snk = gi->snk;
+    struct board *brd = gi->brd;
+    struct scene *scenes = gi->scenes;
+    
+    for(int i=0; i < brd->w; i++) {
+        for(int j=0; j < brd->h; j++) {
             move(j, i);
-            addch(brdtst[i][j]);
-       } 
+            addch(brd->brd[i][j]);
+        }
     }
-/*    
-    struct scene scenes[SCENES_NUM];
-    set_scenes(scenes, y, x);
+    move(snk->y, snk->x);
+    addch(snk->bdy);
+/*
     move(scenes[main_m].y, scenes[main_m].x);
     addstr(scenes[main_m].content);
 */
-    move(snk1->y, snk1->x); 
-    addch(snk1->bdy);
-    curs_set(0);
-
-    
     FILE *f = fopen("celln.txt", "w");
-    fprintf(f, "W is %d and H is %d\n", brd1->w, brd1->h); 
+    fprintf(f, "W is %d and H is %d\n", brd->w, brd->h); 
     curs_set(0);
 
-    while((key = getch()) != ' ')
-        {}
-  
+    int key;
+    while((key = getch()) != ' ') {
+        main_key_handler(gi, key);
+    }
+    curs_set(0);  
     endwin();
     return 0;
 }

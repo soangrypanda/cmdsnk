@@ -13,22 +13,40 @@ void init_ncurses(void)
     curs_set(0);
 }
 
-void init_board(struct board *brd, int y, int x)
+struct game_info * init_game_info(void)
 {
+    int y, x;
+    getmaxyx(stdscr, y, x);
+    struct game_info *gi = malloc(sizeof(*gi));
+    gi->state = game;
+    gi->snk = init_snake(y, x); 
+    gi->brd = init_board(y, x);
+    gi->scenes = set_scenes(y, x);
+    return gi;
+}
+
+struct board * init_board(int y, int x)
+{
+    struct board *brd = malloc(sizeof(*brd));
     brd->h = y;
     brd->w = x;
     brd->brd = malloc(brd->w*sizeof(*brd->brd));        
     for(int i = 0, w = brd->w; i < w; i++) {
         brd->brd[i] = malloc(brd->h*sizeof(**brd->brd)); 
     }
+    set_brd(brd, empty);
+    add_brdrs_2_brd(brd);
+    return brd;
 }
 
-void init_snake(struct snk_prt *snk, int y, int x)
+struct snk_prt * init_snake(int y, int x)
 {
+    struct snk_prt *snk = malloc(sizeof(*snk));
     snk->y = snk->prev_y = y / 2;
     snk->x = snk->prev_x = x / 2;
     snk->bdy = head;
     snk->next = NULL;
+    return snk;
 }
 
 void set_brd(struct board *brd, enum brd_symb symb)
