@@ -8,6 +8,7 @@ struct game_info {
     struct snk_prt *snk;
     struct board *brd;
     struct scene *scenes;  
+    int score;
 };
 enum bdy_symb { head='H' , body='@' };
 struct snk_prt {
@@ -20,6 +21,11 @@ enum brd_symb { empty = ' ', brdr='/', obstcl='*', food='^' };
 struct board {
     enum brd_symb **brd;
     int w, h;
+};
+
+struct food {
+    int cntr;
+    int max;    
 };
 
 void init_ncurses(void);

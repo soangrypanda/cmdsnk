@@ -29,9 +29,18 @@ int main(void)
     curs_set(0);
 
     int key;
+    
+    void (*key_handler)(struct game_info *, char);
+    char tmp_key;
+    key_handler = &dummy_handler;
     while((key = getch()) != ' ') {
-        main_key_handler(gi, key);
+        if(key != ERR) {
+            key_handler = main_key_handler(gi, key);
+            tmp_key = key;
+        } 
+        key_handler(gi, tmp_key);
     }
+    
     curs_set(0);  
     endwin();
     return 0;

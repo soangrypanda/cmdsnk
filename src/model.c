@@ -11,6 +11,7 @@ void init_ncurses(void)
     keypad(stdscr, 1);
     noecho();
     curs_set(0);
+    timeout(0);
 }
 
 struct game_info * init_game_info(void)
@@ -22,6 +23,7 @@ struct game_info * init_game_info(void)
     gi->snk = init_snake(y, x); 
     gi->brd = init_board(y, x);
     gi->scenes = set_scenes(y, x);
+    gi->score = 0;
     return gi;
 }
 
