@@ -38,6 +38,7 @@ int main(void)
             key_handler = main_key_handler(gi, key);
             tmp_key = key;
         } 
+        food_handler(gi);
         key_handler(gi, tmp_key);
     }
     
