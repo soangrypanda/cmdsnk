@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "scene.h"
 
 static void set_main_m(struct scene *scene, int y, int x);
@@ -9,13 +10,13 @@ struct scene * set_scenes(int y, int x)
         switch(i) {
             case main_m:
                 set_main_m(&scenes[main_m], y, x);
-                return;
+                break;
             case game:
-                return;
-            case pause:
-                return;
+                break;
+            case pause_g:
+                break;
             case SCENES_NUM:
-                return;
+                break;
         }
     }
     return scenes;

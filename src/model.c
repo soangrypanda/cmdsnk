@@ -31,6 +31,11 @@ struct game_info * init_game_info(void)
     return gi;
 }
 
+void make_cell(int y, int x, char ch, struct game_info *gi)
+{
+    struct board *brd = gi->brd;
+    brd->brd[x][y] = ch;
+}
 
 /* SNAKE */
 struct snk_prt * init_snake(int y, int x)
@@ -40,9 +45,21 @@ struct snk_prt * init_snake(int y, int x)
     snk->x = snk->prev_x = x / 2;
     snk->bdy = head;
     snk->next = NULL;
+    snk->tail = snk;
     return snk;
 }
 
+void lengthen_snk(struct snk_prt *snk, int y, int x)
+{
+    struct snk_prt *tmp = malloc(sizeof(*tmp));
+    tmp->y = y;
+    tmp->x = x;
+    tmp->bdy = body;
+    tmp->next = NULL;
+    tmp->tail = NULL;  
+    snk->tail->next = tmp;
+    snk->tail = tmp; 
+}
 
 /* BOARD */
 struct board * init_board(int y, int x)
@@ -118,8 +135,8 @@ void try_to_add_food_on_brd(struct game_info *gi)
     struct board *brd = gi->brd;
     int x = brd->w;
     int y = brd->h;
-    int fud_x = 1 + (int)( ((double)x) * rand() / (RAND_MAX + 1.0) );
-    int fud_y = 1 + (int)( ((double)y) * rand() / (RAND_MAX + 1.0) );
+    int fud_x = 1 + (int)( ((double)x-1.0) * (rand()+1.0) / (RAND_MAX + 2.0) );
+    int fud_y = 1 + (int)( ((double)y-1.0) * (rand()+1.0) / (RAND_MAX + 2.0) );
     if(cells_ok_and_empty(gi, fud_y, fud_x)) {
         add_food_on_brd(gi, fud_y, fud_x);
     }

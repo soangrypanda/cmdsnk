@@ -5,7 +5,7 @@
                        "vim keys or arrows to move\n"\
                        "esc while in game to pause"
 
-enum scene_t { main_m=0, game, pause, SCENES_NUM };
+enum scene_t { main_m=0, game, pause_g, SCENES_NUM };
 struct scene {
     enum scene_t type;
     char *content; 

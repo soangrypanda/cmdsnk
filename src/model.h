@@ -15,7 +15,7 @@ enum bdy_symb { head='H' , body='@' };
 struct snk_prt {
     enum bdy_symb bdy;
     int y, x, prev_y, prev_x;
-    struct snk_prt *next;
+    struct snk_prt *next, *tail;
 };
 
 enum brd_symb { empty = ' ', brdr='/', obstcl='*', food='^' };        
@@ -33,8 +33,10 @@ struct food {
 
 void init_ncurses(void);
 struct game_info * init_game_info(void);
+void make_cell(int y, int x, char ch, struct game_info *gi);
 
 struct snk_prt * init_snake(int y, int x);
+void lengthen_snk(struct snk_prt *snk, int y, int x);
 
 struct board * init_board(int y, int x);
 void add_brdrs_2_brd(struct board *brd);
