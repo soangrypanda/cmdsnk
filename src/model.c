@@ -31,11 +31,49 @@ struct game_info * init_game_info(void)
     return gi;
 }
 
-void make_cell(int y, int x, char ch, struct game_info *gi)
+void turn_cell_into(char ch, int y, int x, struct game_info *gi)
 {
     struct board *brd = gi->brd;
     brd->brd[x][y] = ch;
 }
+
+int cell_is(char ch, struct game_info *gi, int y, int x)
+{
+    if((gi->brd->brd[x][y] = ch))
+        return 1;
+    return 0;
+}
+
+int cell_is_within_brd(struct game_info *gi, int y, int x)
+{
+    if( (y > 0 && y < (gi->brd->h - 1)) &&
+        (x > 0 && x < (gi->brd->w - 1)) )
+            return 1;
+    return 0;
+}
+
+int find_empty_cell(struct game_info *gi, int y, int x, 
+                    int *y_to_return, int *x_to_return)
+{
+    if(!cell_is_within_brd(gi, y, x)) {
+        return 0;
+    }
+    if(cell_is(empty, gi, y, x)) {
+        *y_to_return = y;
+        *x_to_return = x;
+        return 1;
+    }
+    if (find_empty_cell(gi, y+1, x, y_to_return, x_to_return))
+        return 1;
+    if (find_empty_cell(gi, y, x+1, y_to_return, x_to_return))
+        return 1;
+    if (find_empty_cell(gi, y-1, x, y_to_return, x_to_return))
+        return 1;
+    if (find_empty_cell(gi, y, x-1, y_to_return, x_to_return))
+        return 1;
+    return 0;
+}
+
 
 /* SNAKE */
 struct snk_prt * init_snake(int y, int x)
@@ -46,6 +84,7 @@ struct snk_prt * init_snake(int y, int x)
     snk->bdy = head;
     snk->next = NULL;
     snk->tail = snk;
+    snk->move_delay = snk_max_move_delay;
     return snk;
 }
 
@@ -59,6 +98,13 @@ void lengthen_snk(struct snk_prt *snk, int y, int x)
     tmp->tail = NULL;  
     snk->tail->next = tmp;
     snk->tail = tmp; 
+}
+
+void make_snk_faster(struct game_info *gi)
+{
+    struct snk_prt *snk = gi->snk;
+    if(snk->move_delay > snk_min_move_delay)
+        snk->move_delay -= delay_decrease; 
 }
 
 /* BOARD */
@@ -135,83 +181,32 @@ void try_to_add_food_on_brd(struct game_info *gi)
     struct board *brd = gi->brd;
     int x = brd->w;
     int y = brd->h;
-    int fud_x = 1 + (int)( ((double)x-1.0) * (rand()+1.0) / (RAND_MAX + 2.0) );
-    int fud_y = 1 + (int)( ((double)y-1.0) * (rand()+1.0) / (RAND_MAX + 2.0) );
-    if(cells_ok_and_empty(gi, fud_y, fud_x)) {
+    int fud_x = 1 + (int)( ((double)x-1.0) * (rand()+1.0) / (RAND_MAX) );
+    int fud_y = 1 + (int)( ((double)y-1.0) * (rand()+1.0) / (RAND_MAX) );
+    if( cell_is_within_brd(gi, fud_y, fud_x) &&
+        cell_is(empty, gi, fud_y, fud_x) ) 
+    {
         add_food_on_brd(gi, fud_y, fud_x);
     }
-    else {
+    else
+    {
         int new_y = fud_y;
         int new_x = fud_x;
         if((find_empty_cell(gi, fud_y, fud_x, &new_y, &new_x))) {
             add_food_on_brd(gi, new_y, new_x);
         }
+        else {
+         /* DECLARE WIN GAME */ 
+        } 
     }
 }
 
 void add_food_on_brd(struct game_info *gi, int y, int x)
 {
-    struct board *brd = gi->brd;
-    struct food *fud = gi->fud;
-    brd->brd[x][y] = food; 
+    turn_cell_into(food, y, x, gi);
     move(y,x);
     addch(food);
     curs_set(0); 
-    fud->cntr++;
-}
-
-int cells_ok_and_empty(struct game_info *gi, int y, int x)
-{
-    struct board *brd = gi->brd; 
-    if((brd->brd[x][y] = empty) && (y > 0 && y < brd->h) && (x > 0 && x < brd->w))
-        return 1;
-    return 0;
-} 
-
-int find_empty_cell(struct game_info *gi, int old_y, int old_x, int *y, int *x)
-{
-    if(gi->fud->cell_srch_attempts > max_cell_search_attempts) {
-        gi->fud->cell_srch_attempts = 0;
-        return 0;
-    }
-    (gi->fud->cell_srch_attempts)++;
-    if(cells_ok_and_empty(gi, old_y + 1, old_x)){
-        *y = old_y + 1;
-        *x = old_x;
-        gi->fud->cell_srch_attempts = 0;
-        return 1; 
-    }
-    else {
-        find_empty_cell(gi, old_y+1, old_x, y, x); 
-    } 
-    if(cells_ok_and_empty(gi, old_y, old_x + 1)){
-        *y = old_y;
-        *x = old_x + 1;
-        gi->fud->cell_srch_attempts = 0;
-        return 1; 
-    }
-    else {
-        find_empty_cell(gi, old_y, old_x+1, y, x); 
-    } 
-    if(cells_ok_and_empty(gi, old_y - 1, old_x)){
-        *y = old_y - 1;
-        *x = old_x;
-        gi->fud->cell_srch_attempts = 0;
-        return 1; 
-    }
-    else {
-        find_empty_cell(gi, old_y-1, old_x, y, x); 
-    } 
-    if(cells_ok_and_empty(gi, old_y, old_x-1)){
-        *y = old_y;
-        *x = old_x - 1;
-        gi->fud->cell_srch_attempts = 0;
-        return 1; 
-    }
-    else {
-        find_empty_cell(gi, old_y, old_x-1, y, x); 
-    } 
-    gi->fud->cell_srch_attempts = 0;
-    return 0;
+    gi->fud->cntr += 1;
 }
 

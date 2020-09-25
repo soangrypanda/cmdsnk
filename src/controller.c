@@ -24,14 +24,16 @@ void move_snk(struct snk_prt *snk, int new_y, int new_x)
 void handle_eat_food(struct game_info *gi, int y, int x)
 {
     lengthen_snk(gi->snk, y, x); 
-    make_cell(y, x, empty, gi);
+    turn_cell_into(empty, y, x, gi);
     gi->fud->cntr -= 1;
     gi->score += 1;
+    make_snk_faster(gi);
 }
-void snk_move_handler(int delay, struct game_info *gi, int off_y, int off_x)
+void snk_move_handler(struct game_info *gi, int off_y, int off_x)
 {
     struct board *brd = gi->brd;
     struct snk_prt *snk = gi->snk;
+    int delay = snk->move_delay;
     int new_y = snk->y + off_y;
     int new_x = snk->x + off_x;
     switch(brd->brd[new_x][new_y]) {
@@ -48,23 +50,22 @@ void snk_move_handler(int delay, struct game_info *gi, int off_y, int off_x)
 
 void game_handler(struct game_info *gi, char key)
 {
-    static int move_delay = 150000;
     switch(key) {
         case 'l':
         case 'd':
-            snk_move_handler(move_delay, gi, MOVE_RIGHT);
+            snk_move_handler(gi, MOVE_RIGHT);
             break;
         case 'h':
         case 'a':
-            snk_move_handler(move_delay, gi, MOVE_LEFT);
+            snk_move_handler(gi, MOVE_LEFT);
             break;
         case 'k':
         case 'w':
-            snk_move_handler(move_delay, gi, MOVE_UP);
+            snk_move_handler(gi, MOVE_UP);
             break;
         case 'j':
         case 's':
-            snk_move_handler(move_delay, gi, MOVE_DOWN); 
+            snk_move_handler(gi, MOVE_DOWN); 
             break;
         case 'q':
             break;

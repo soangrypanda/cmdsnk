@@ -9,7 +9,7 @@
 #define MOVE_DOWN 1, 0 
 
 void move_snk(struct snk_prt *snk, int off_y, int off_x);
-void snk_move_handler(int dealy, struct game_info *gi, int off_y, int off_x);
+void snk_move_handler(struct game_info *gi, int off_y, int off_x);
 void game_handler(struct game_info *gi, char key);
 void (*main_key_handler(struct game_info *gi, char key))(struct game_info *gi, char key);
 void dummy_handler(struct game_info *gi, char key);
