@@ -12,9 +12,11 @@ struct game_info {
     struct food *fud;
 };
 enum bdy_symb { head='H' , body='@' };
+enum snk_dir { left = 1, right = -1, up = 2, down = -2, nowhere = 0 };
+
 struct snk_prt {
     enum bdy_symb bdy;
-    int y, x, prev_y, prev_x, move_delay;
+    int y, x, prev_y, prev_x, move_delay, cur_dir;
     struct snk_prt *next, *tail;
 };
 

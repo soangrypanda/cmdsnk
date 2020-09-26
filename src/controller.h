@@ -8,11 +8,12 @@
 #define MOVE_UP -1, 0
 #define MOVE_DOWN 1, 0 
 
-void move_snk(struct snk_prt *snk, int off_y, int off_x);
+void move_snk(struct snk_prt *snk, int off_y, int off_x, struct game_info *gi);
 void snk_move_handler(struct game_info *gi, int off_y, int off_x);
-void game_handler(struct game_info *gi, char key);
-void (*main_key_handler(struct game_info *gi, char key))(struct game_info *gi, char key);
-void dummy_handler(struct game_info *gi, char key);
+int snk_direction_handled(struct game_info *gi, int dir);
+void game_handler(struct game_info *gi, char *key);
+void (*main_key_handler(struct game_info *gi, char *key))(struct game_info *gi, char *key);
+void dummy_handler(struct game_info *gi, char *key);
 void handle_eat_food(struct game_info *gi, int y, int x);
 
 #endif

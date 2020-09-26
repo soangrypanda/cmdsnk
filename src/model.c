@@ -85,6 +85,7 @@ struct snk_prt * init_snake(int y, int x)
     snk->next = NULL;
     snk->tail = snk;
     snk->move_delay = snk_max_move_delay;
+    snk->cur_dir = 0;
     return snk;
 }
 

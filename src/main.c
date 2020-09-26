@@ -30,16 +30,15 @@ int main(void)
 
     int key;
     
-    void (*key_handler)(struct game_info *, char);
+    void (*key_handler)(struct game_info *, char *);
     char tmp_key;
     key_handler = &dummy_handler;
     while((key = getch()) != ' ') {
         if(key != ERR) {
-            key_handler = main_key_handler(gi, key);
             tmp_key = key;
+            key_handler = main_key_handler(gi, &tmp_key);
         } 
-        food_handler(gi);
-        key_handler(gi, tmp_key);
+        key_handler(gi, &tmp_key);
     }
     
     curs_set(0);  

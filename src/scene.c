@@ -1,15 +1,13 @@
 #include <stdlib.h>
 #include "scene.h"
 
-static void set_main_m(struct scene *scene, int y, int x);
-
 struct scene * set_scenes(int y, int x)
 {
     struct scene *scenes = malloc(sizeof(*scenes) * SCENES_NUM);
     for(enum scene_t i=0; i < SCENES_NUM; i++) {
         switch(i) {
             case main_m:
-                set_main_m(&scenes[main_m], y, x);
+                set_a_scene(i, &scenes[i], y, x, MAIN_M_CONTENT);
                 break;
             case game:
                 break;
@@ -21,10 +19,14 @@ struct scene * set_scenes(int y, int x)
     }
     return scenes;
 }
-static void set_main_m(struct scene *scene, int y, int x)
+void set_a_scene(int scn, struct scene *scene, int y, int x, char *cont)
 {
-    scene->type = main_m;
-    scene->content = MAIN_M_CONTENT;
+    scene->type = scn;
+    scene->content = cont;
     scene->y = y / 2;
     scene->x = x / 2;
+}
+
+void change_scene_to(int scene, struct game_info *gi) {
+    gi->stage = scene;
 }

@@ -1,4 +1,4 @@
-SRCMODULES = model.c scene.c controller.c
+SRCMODULES = model.c scene.c controller.c view.c
 OBJMODULES = $(SRCMODULES:.c=.o)
 CFLAGS = -g -Wall
 CLIBS = -lncurses
