@@ -10,5 +10,9 @@ int get_y(const void *const _self);
 int set_x(void *const _self, int x);
 int set_y(void *const _self, int y);
 
+/* TODO OF PUBLIC METHODS
+    * distance between two coords
+    * angle between three coords
+*/    
 
 #endif
