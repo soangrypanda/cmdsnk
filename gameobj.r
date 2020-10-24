@@ -7,6 +7,8 @@
     * collection of pointers to its spites
     * velocity
     * direction of movement 
+    * can-be-controlled flag
+    * can_be-moved flag
 /*
 
 #endif
