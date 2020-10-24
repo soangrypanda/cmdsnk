@@ -7,7 +7,9 @@
 
 #define TWOCOORD_VT_INIT     OBJECT_VT_INIT,                              \
                              .size = sizeof(struct twocoord_class_s),     \
-                             .ctor = twocoord_ctor
+                             .ctor = twocoord_ctor,                       \
+                             .print= twocoord_print,                      \
+                             .compare = twocoord_compare
 
 #define TWOCOORD_DATA        OBJECT_DATA;          \
                              int x, y

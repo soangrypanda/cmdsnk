@@ -20,7 +20,10 @@ int main(void)
     set_y(b, 13);
     printf("twocoord x is %d\n", get_x(b));
     printf("twocoord y is %d\n", get_y(b));
-
+    
+    void *c = new_o(twocoord, 10, 13); 
+    printf("compare result - %d\n", compare_o(b, c));
     delete_o(&a);
     delete_o(&b);
+    delete_o(&c);
 }

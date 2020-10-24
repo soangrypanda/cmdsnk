@@ -9,6 +9,17 @@ void *twocoord_ctor(void *const _self, va_list *app)
     return _self; 
 }
 
+void twocoord_print(const void *const _self)
+{
+    printf("%d, %d\n", get_x(_self), get_y(_self));
+}
+
+int twocoord_compare(const void *const _self, const void *const _other)
+{
+    return (get_x(_self) == get_x(_other)) && (get_y(_self) == get_y(_other));
+}
+
+
 int get_x(const void *const _self)
 {
     const struct twocoord_class_s *const self = _self;
