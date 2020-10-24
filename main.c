@@ -16,6 +16,11 @@ int main(void)
 
     printf("twocoord x is %d\n", get_x(b));
     printf("twocoord y is %d\n", get_y(b));
+    set_x(b, 10);
+    set_y(b, 13);
+    printf("twocoord x is %d\n", get_x(b));
+    printf("twocoord y is %d\n", get_y(b));
+
     delete_o(&a);
     delete_o(&b);
 }

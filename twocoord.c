@@ -25,10 +25,25 @@ int get_y(const void *const _self)
     return self->y; 
 }
 
+int set_x(void *const _self, int x)
+{
+    struct twocoord_class_s *const self = _self;
+        if(CHECK_IF_OBJ(self) || !self->x)
+    exit_error("get_x", EWRONGOBJ);
+    return self->x = x;
+}
+
+int set_y(void *const _self, int y)
+{
+    struct twocoord_class_s *const self = _self;
+        if(CHECK_IF_OBJ(self) || !self->x)
+    exit_error("get_x", EWRONGOBJ);
+    return self->y = y;
+}
+
+
 struct twocoord_vt_s twocoord_vt = {
     TWOCOORD_VT_INIT,
-    .size = sizeof(struct twocoord_class_s),
-    .ctor = twocoord_ctor
 };
 
 void *const twocoord = &twocoord_vt;
