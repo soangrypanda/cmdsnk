@@ -1,4 +1,0 @@
-#ifndef CMDSNK_VIEW_H_SENTRY
-#define CMDSNK_VIEW_H_SENTRY
-
-#endif
