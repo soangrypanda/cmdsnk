@@ -5,7 +5,7 @@
 #include <string.h>
 #include <time.h>
  
-#define collide(obj, cell) (screen[x * (int)obj.y+(int)obj.x]==cell)
+#define collide(obj, scr,  cell) (scr.screen[scr.w * (int)obj.y+(int)obj.x]==cell)
 
 #define SCORE_TXT "score: %04d"
 #define SCORE_OUT_W (sizeof(SCORE_TXT)+2)
@@ -14,23 +14,25 @@
 #define TITLE_TXT "CMDSNK by soangrypanda"
 #define TITLE_OUT_W (sizeof(TITLE_TXT)+2)
 
-void initcurses(void);
 
-void key_handler(int inp);
-
-float get_elapsed_time(struct timespec *t1, struct timespec *t2);
-
-
-int x,y;
-int b_game_on = 1;
-int i_score = 0;
-int i_level = 0;
+struct game_state_s {
+    float elapsed_time;
+    int game_on;
+    int score;
+    int level;
+};
+struct game_state_s game_state = { 0 };
 
 int scx, scy, lvx, lvy, tlx, tly;
 int score_win_y = 0;
 unsigned int ui_score_win_h = 1;
 
-struct snake_t {
+struct screen_s {
+    char *screen; 
+    int w, h;
+};
+
+struct snake_s {
     float x, y;
     float vx, vy;
     float cvx, cvy;
@@ -40,27 +42,33 @@ enum snake_dir {up, left, down, right, none};
 enum cells {blank = '.', s_head = '@', food = '^', brd_h = '-', brd_v = '|'};
 
 
+void initcurses(void);
+void initscreen(struct screen_s *screen);
+void handle_key(int inp);
+float get_elapsed_time(struct timespec *t1, struct timespec *t2);
+void handle_snake_collision(struct snake_s *snake, struct screen_s *screen);
 
 int main(void)
 {
     initcurses();
-    char *screen = calloc(y*x, sizeof(*screen));
-    memset(screen, blank, y*x);
-    screen[y*x] = '\0';
+
+
+    struct screen_s screen = { 0 };
+    initscreen(&screen);
 
     char score_out[SCORE_OUT_W];
-    sprintf(score_out, SCORE_TXT, i_score);
+    sprintf(score_out, SCORE_TXT, game_state.score);
     char level_out[LEVEL_OUT_W];
-    sprintf(level_out, LEVEL_TXT, i_score);
+    sprintf(level_out, LEVEL_TXT, game_state.level);
     char title_out[] = TITLE_TXT;
      
-    if(SCORE_OUT_W+LEVEL_OUT_W+TITLE_OUT_W < x-2) {
+    if(SCORE_OUT_W+LEVEL_OUT_W+TITLE_OUT_W < screen.w-2) {
         ui_score_win_h = 4; 
         scx = 2;
         scy = score_win_y + 2;
-        lvx = x - LEVEL_OUT_W + 1;
+        lvx = screen.w - LEVEL_OUT_W + 1;
         lvy = score_win_y + 2;
-        tlx = x / 2 - TITLE_OUT_W / 2;
+        tlx = screen.w / 2 - TITLE_OUT_W / 2;
         tly = score_win_y + 2;
     }
     else {
@@ -68,20 +76,21 @@ int main(void)
  //FINALIZE THIS PART!!!
     }
 
-    for(int h=0; h < y; ++h) {
-        screen[h * x] = brd_v;
-        screen[h * x + x-1] = brd_v;
+    for(int h=0; h < screen.h; ++h) {
+        screen.screen[h * screen.w] = brd_v;
+        screen.screen[h * screen.w + screen.w-1] = brd_v;
     }
-    for(int w=0; w < x; ++w) {
-        screen[w] = brd_h;
-        screen[x*y-x+w] = brd_h; 
-        screen[x * score_win_y+w] = brd_h;
-        screen[x * (score_win_y+ui_score_win_h)+w] = brd_h;
+    for(int w=0; w < screen.w; ++w) {
+        screen.screen[w] = brd_h;
+        screen.screen[screen.w*screen.h-screen.w+w] = brd_h; 
+        screen.screen[screen.w * score_win_y+w] = brd_h;
+        screen.screen[screen.w * (score_win_y+ui_score_win_h)+w] = brd_h;
     }
    
-     
-    snake.x = x / 2;
-    snake.y = y / 2;
+    game_state.game_on = 1;
+ 
+    snake.x = screen.w / 2;
+    snake.y = screen.h / 2;
     snake.vx = 0;
     snake.vy = 0;
     snake.cvx = 12;
@@ -90,55 +99,40 @@ int main(void)
  * velocity proportion 1 - 0.6
  */
     snake.dir = none; 
-    screen[x * (int)snake.y + (int)snake.x] = s_head;
-    
-    FILE *fd = fopen("log.txt", "w");
+    screen.screen[screen.w * (int)snake.y + (int)snake.x] = s_head;
+     
+    //FILE *fd = fopen("log.txt", "w");
     //fprintf(fd, "x - %d, y - %d, sx - %d, ys - %d\n", x, y, snake.x, snake.y);
+    
 
-    float f_elapsed_time = 0;
     struct timespec t1 = { 0 };
     struct timespec t2 = { 0 };
     clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
     clock_gettime(CLOCK_MONOTONIC_RAW, &t2);
     
-    while(b_game_on) {
+    while(game_state.game_on) {
         clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
-        f_elapsed_time = get_elapsed_time(&t1, &t2);        
+        game_state.elapsed_time = get_elapsed_time(&t1, &t2);        
         memcpy(&t2, &t1, sizeof(t1));
         //fprintf(fd, "et = %f\n", elapsed_time);
  
-        screen[x * (int)snake.y + (int)snake.x] = blank;
-        key_handler(getch());
-        snake.x += snake.vx * f_elapsed_time;
-        snake.y += snake.vy * f_elapsed_time; 
-/*
-        if(snake.x > 0 && snake.x < x && snake.y > 0 && snake.y < y) {
-        }        
-        else {
-            snake.x -= snake.vx * f_elapsed_time;
-            snake.y -= snake.vy * f_elapsed_time; 
-            snake.vx = 0; snake.vy = 0;
-        }
-*/
+        screen.screen[screen.w * (int)snake.y + (int)snake.x] = blank;
 
-        if(collide(snake, brd_v) || collide(snake, brd_h)) {
-            snake.x -= snake.vx * f_elapsed_time;
-            snake.y -= snake.vy * f_elapsed_time; 
-            snake.vx = 0; snake.vy = 0;
-        }
+        handle_key(getch());
 
-        if(screen[x * (int)snake.y + (int)snake.x] == food) {
-            i_score++;
-        }
+        snake.x += snake.vx * game_state.elapsed_time;
+        snake.y += snake.vy * game_state.elapsed_time; 
+        
+        handle_snake_collision(&snake, &screen);
             
-        screen[x * (int)snake.y + (int)snake.x] = s_head;
-        mvaddstr(0,0,screen); 
+        screen.screen[screen.w * (int)snake.y + (int)snake.x] = s_head;
+        mvaddstr(0,0,screen.screen); 
         mvaddstr(scy,scx,score_out);
         mvaddstr(lvy,lvx,level_out); 
         mvaddstr(tly,tlx,title_out); 
         refresh();
     }
-    free(screen);
+    free(screen.screen);
     endwin();
     return EXIT_SUCCESS;
 }
@@ -146,19 +140,25 @@ int main(void)
 void initcurses(void)
 {
     initscr();
-    getmaxyx(stdscr, y, x);
     curs_set(0);
     noecho();
     cbreak();
     keypad(stdscr, 1); 
     timeout(0);
 }
+void initscreen(struct screen_s *screen)
+{
+    getmaxyx(stdscr, screen->h, screen->w);
+    screen->screen = calloc(screen->h*screen->w, sizeof(*(screen->screen)));
+    memset(screen->screen, blank, screen->h * screen->w);
+    screen->screen[screen->h*screen->w] = '\0';
+}
 
-void key_handler(int inp)
+void handle_key(int inp)
 {
     switch(inp){
         case(' '):
-            b_game_on = 0; 
+            game_state.game_on = 0; 
             break;
         case('l'):
             if(snake.dir == left)
@@ -198,3 +198,13 @@ float get_elapsed_time(struct timespec *t1, struct timespec *t2)
     return (float)(t1->tv_sec-t2->tv_sec) + (float)(t1->tv_nsec-t2->tv_nsec)*1e-9;
 }
 
+void handle_snake_collision(struct snake_s *snake, struct screen_s *screen) {
+    if(collide((*snake), (*screen), brd_v) || collide((*snake), (*screen), brd_h)) {
+        snake->x -= snake->vx * game_state.elapsed_time;
+        snake->y -= snake->vy * game_state.elapsed_time; 
+        snake->vx = 0; snake->vy = 0;
+    }
+    if(collide((*snake), (*screen), food)) {
+        game_state.score++;
+    }
+}
