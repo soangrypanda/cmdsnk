@@ -8,11 +8,11 @@
 #define collide(obj, scr,  cell) (scr.screen[scr.w * (int)obj.y+(int)obj.x]==cell)
 
 #define SCORE_TXT "score: %04d"
-#define SCORE_OUT_W (sizeof(SCORE_TXT)+2)
+#define SCORE_TXT_W (sizeof(SCORE_TXT)+4)
 #define LEVEL_TXT "level: %04d"
-#define LEVEL_OUT_W (sizeof(LEVEL_TXT)+2)
+#define LEVEL_TXT_W (sizeof(LEVEL_TXT)+4)
 #define TITLE_TXT "CMDSNK by soangrypanda"
-#define TITLE_OUT_W (sizeof(TITLE_TXT)+2)
+#define TITLE_TXT_W (sizeof(TITLE_TXT))
 
 
 struct game_state_s {
@@ -24,12 +24,22 @@ struct game_state_s {
 struct game_state_s game_state = { 0 };
 
 int scx, scy, lvx, lvy, tlx, tly;
-int score_win_y = 0;
 unsigned int ui_score_win_h = 1;
 
 struct screen_s {
     char *screen; 
     int w, h;
+};
+
+struct win_s {
+    char **txts;
+    char *win;
+    int w, h, x, y;
+};
+
+struct txt_s {
+    char *txt;
+    int x, y, w;
 };
 
 struct snake_s {
@@ -39,11 +49,12 @@ struct snake_s {
     char dir;
 } snake;
 enum snake_dir {up, left, down, right, none};
+
 enum cells {blank = '.', s_head = '@', food = '^', brd_h = '-', brd_v = '|'};
 
 
 void initcurses(void);
-void initscreen(struct screen_s *screen);
+void init_mainscreen(struct screen_s *screen);
 void handle_key(int inp);
 float get_elapsed_time(struct timespec *t1, struct timespec *t2);
 void handle_snake_collision(struct snake_s *snake, struct screen_s *screen);
@@ -52,27 +63,39 @@ int main(void)
 {
     initcurses();
 
-
     struct screen_s screen = { 0 };
-    initscreen(&screen);
+    init_mainscreen(&screen);
+    
+    struct win_s win = { 0 };
+    win.w = screen.w; 
 
-    char score_out[SCORE_OUT_W];
-    sprintf(score_out, SCORE_TXT, game_state.score);
-    char level_out[LEVEL_OUT_W];
-    sprintf(level_out, LEVEL_TXT, game_state.level);
-    char title_out[] = TITLE_TXT;
+    struct txt_s score = { 0 };
+    struct txt_s level = { 0 };
+    struct txt_s title = { 0 }; 
      
-    if(SCORE_OUT_W+LEVEL_OUT_W+TITLE_OUT_W < screen.w-2) {
-        ui_score_win_h = 4; 
-        scx = 2;
-        scy = score_win_y + 2;
-        lvx = screen.w - LEVEL_OUT_W + 1;
-        lvy = score_win_y + 2;
-        tlx = screen.w / 2 - TITLE_OUT_W / 2;
-        tly = score_win_y + 2;
+    score.w = sizeof(SCORE_TXT) + 2;
+    score.txt = malloc(score.w);
+    sprintf(score.txt, SCORE_TXT, game_state.score);
+    
+    level.w = sizeof(SCORE_TXT) + 2;
+    level.txt = malloc(level.w);
+    sprintf(level.txt, LEVEL_TXT, game_state.score);
+
+    title.w = TITLE_TXT_W;
+    title.txt = malloc(title.w);
+    sprintf(title.txt, TITLE_TXT);
+     
+    if(score.w+level.w+title.w< screen.w-2) {
+        win.h = 4; 
+        score.x = 2;
+        score.y = win.y + 2;
+        level.x = win.w - level.w + 1;
+        level.y = win.y + 2;
+        title.x = win.w / 2 - title.w / 2;
+        title.y = win.y+ 2;
     }
     else {
-        ui_score_win_h = 6; 
+        win.h = 6; 
  //FINALIZE THIS PART!!!
     }
 
@@ -83,8 +106,8 @@ int main(void)
     for(int w=0; w < screen.w; ++w) {
         screen.screen[w] = brd_h;
         screen.screen[screen.w*screen.h-screen.w+w] = brd_h; 
-        screen.screen[screen.w * score_win_y+w] = brd_h;
-        screen.screen[screen.w * (score_win_y+ui_score_win_h)+w] = brd_h;
+        screen.screen[screen.w * win.y+w] = brd_h;
+        screen.screen[screen.w * (win.y+win.h)+w] = brd_h;
     }
    
     game_state.game_on = 1;
@@ -101,7 +124,8 @@ int main(void)
     snake.dir = none; 
     screen.screen[screen.w * (int)snake.y + (int)snake.x] = s_head;
      
-    //FILE *fd = fopen("log.txt", "w");
+    FILE *fd = fopen("log.txt", "w");
+    fprintf(fd, "x - %d, y - %d, sx - %f, ys - %f, sizeof - %ld\n", screen.w, screen.h, snake.x, snake.y, sizeof((*screen.screen)));
     //fprintf(fd, "x - %d, y - %d, sx - %d, ys - %d\n", x, y, snake.x, snake.y);
     
 
@@ -127,9 +151,9 @@ int main(void)
             
         screen.screen[screen.w * (int)snake.y + (int)snake.x] = s_head;
         mvaddstr(0,0,screen.screen); 
-        mvaddstr(scy,scx,score_out);
-        mvaddstr(lvy,lvx,level_out); 
-        mvaddstr(tly,tlx,title_out); 
+        mvaddstr(score.y,score.x,score.txt);
+        mvaddstr(level.y,level.x,level.txt);
+        mvaddstr(title.y,title.x,title.txt);
         refresh();
     }
     free(screen.screen);
@@ -146,10 +170,10 @@ void initcurses(void)
     keypad(stdscr, 1); 
     timeout(0);
 }
-void initscreen(struct screen_s *screen)
+void init_mainscreen(struct screen_s *screen)
 {
     getmaxyx(stdscr, screen->h, screen->w);
-    screen->screen = calloc(screen->h*screen->w, sizeof(*(screen->screen)));
+    screen->screen = calloc((screen->h)*(screen->w)+1, sizeof(*(screen->screen)));
     memset(screen->screen, blank, screen->h * screen->w);
     screen->screen[screen->h*screen->w] = '\0';
 }
