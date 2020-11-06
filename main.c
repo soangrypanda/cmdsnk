@@ -8,7 +8,7 @@
 
 FILE *fd1; 
 
-#define collide(obj, scr,  cell) (scr.win[scr.w * (int)obj.y+(int)obj.x]==cell)
+#define collide(ox, oy, scr, cell) (scr.win[scr.w * (int)oy+(int)ox]==cell)
 
 #define need_to_add_food(gs) ((gs)->foods < (gs)->max_food)
 #define change_food_cntr(gs, how) (((gs)->foods)how)
@@ -48,7 +48,7 @@ FILE *fd1;
     }                                                   \
     wind.win[wind.w*wind.h] = '\0'
 
-#define draw_cell(wind, x, y, cont) (wind.win[wind.w * (y) + (x)] = cont)
+#define draw_cell(wind, x, y, cont) ((wind).win[(wind).w * (y) + (x)] = cont)
 
 
 unsigned int seed;  
@@ -80,23 +80,35 @@ struct txt_s {
     int x, y, w;
 };
 
-struct snake_s {
+struct snake_part_s {
+    struct snake_part_s *next;
     float x, y;
+    char bdy;
+};
+struct snake_s {
+    struct snake_part_s *head;
+    struct snake_part_s *tail;
+    float nx, ny;
     float vx, vy;
     float cvx, cvy;
+    float dvx, dvy;
     char dir;
-} snake;
+    char be_moved; 
+};
+
 enum snake_dir {up, left, down, right, none};
 
-enum cells {blank = '.', s_head = '@', food = '^', brd_h = '-', brd_v = '|'};
+enum cells {blank = '.', s_head = '@', s_bdy = '0', food = '^', brd_h = '-', brd_v = '|'};
 
 
 void initcurses(void);
 void init_mainscreen(struct screen_s *screen);
-void handle_key(int inp);
+void handle_key(int inp, struct snake_s * snake);
 void handle_food(struct win_s *gs);
 float get_elapsed_time(struct timespec *t1, struct timespec *t2);
 void handle_snake_collision(struct snake_s *snake, struct win_s *screen);
+void enlen_snake(struct snake_s *snake);
+void mv_snake(struct snake_part_s *snkprt, float x, float y, struct win_s *win);
 
 int main(void)
 {
@@ -137,18 +149,28 @@ int main(void)
 
     game_state.game_on = 1;
     game_state.max_food = 1; 
+    
+    struct snake_part_s snkprt = { 0 };
+    snkprt.next = NULL;
+    snkprt.x = game_win.w / 2;
+    snkprt.y = game_win.h / 2;
+    snkprt.bdy = s_head;
 
-    snake.x = game_win.w / 2;
-    snake.y = game_win.h / 2;
+    struct snake_s snake = { 0 };
+    snake.head = &snkprt;
+    snake.tail = &snkprt;
     snake.vx = 0;
     snake.vy = 0;
     snake.cvx = 12;
     snake.cvy = 8;
-/*
- * velocity proportion 1 - 0.6
- */
+    snake.dvx = 1;
+    snake.dvy = 0.6;
+    snake.nx = snkprt.x; 
+    snake.ny = snkprt.y;
+    snake.be_moved = 0;
     snake.dir = none; 
-    game_win.win[game_win.w * (int)snake.y + (int)snake.x] = s_head;
+    
+    draw_cell(game_win, (int)snkprt.x, (int)snkprt.y, snkprt.bdy);
      
     FILE *fd = fopen("log.txt", "w");
     fd1 = fopen("log.txt", "w");
@@ -168,7 +190,7 @@ int main(void)
         memcpy(&t2, &t1, sizeof(t1));
         //fprintf(fd, "et = %f\n", elapsed_time);
  
-        handle_key(getch());
+        handle_key(getch(), &snake);
 
         if(need_to_add_food(&game_state)) {
             handle_food(&game_win);
@@ -177,14 +199,18 @@ int main(void)
 
         //fprintf(fd, "%d - %d\n", game_state.foods, game_state.max_food);
 
-        draw_cell(game_win, (int)snake.x, (int)snake.y, blank);
+        //draw_cell(game_win, (int)snkprt.x, (int)snkprt.y, blank);
 
-        snake.x += snake.vx * game_state.elapsed_time;
-        snake.y += snake.vy * game_state.elapsed_time; 
-        
+        snake.nx += snake.vx * game_state.elapsed_time;
+        snake.ny += snake.vy * game_state.elapsed_time; 
         handle_snake_collision(&snake, &game_win);
+        if(((int)snake.nx != (int)snake.head->x) || ((int)snake.ny != (int)snake.head->y))
+            snake.be_moved = 1;
+        if(snake.be_moved)
+            mv_snake(snake.head, snake.nx, snake.ny, &game_win);
+        snake.be_moved = 0;
             
-        draw_cell(game_win, (int)snake.x, (int)snake.y, s_head);
+        //draw_cell(game_win, (int)snkprt.x, (int)snkprt.y, snkprt.bdy);
 
         update_txt(score.txt, SCORE_TXT, game_state.score); 
         update_txt(level.txt, LEVEL_TXT, game_state.level); 
@@ -225,39 +251,43 @@ void init_mainscreen(struct screen_s *screen)
     screen->screen[screen->h*screen->w] = '\0';
 }
 
-void handle_key(int inp)
+void handle_key(int inp, struct snake_s *snake)
 {
     switch(inp){
         case(' '):
             game_state.game_on = 0; 
             break;
         case('l'):
-            if(snake.dir == left)
+            if(snake->dir == left)
                 break;
-            snake.vx = snake.cvx; 
-            snake.vy = 0; 
-            snake.dir = right;
+            snake->vx = snake->cvx; 
+            snake->vy = 0; 
+            snake->dir = right;
+            snake->be_moved = 1;
             break;
         case('h'):
-            if(snake.dir == right)
+            if(snake->dir == right)
                 break;
-            snake.vx = -snake.cvx;
-            snake.vy = 0;
-            snake.dir = left;
+            snake->vx = -snake->cvx;
+            snake->vy = 0;
+            snake->dir = left;
+            snake->be_moved = 1;
             break;
         case('k'):
-            if(snake.dir == down)
+            if(snake->dir == down)
                 break;
-            snake.vx = 0;
-            snake.vy = -snake.cvy;
-            snake.dir = up;
+            snake->vx = 0;
+            snake->vy = -snake->cvy;
+            snake->dir = up;
+            snake->be_moved = 1;
             break;
         case('j'):
-            if(snake.dir == up)
+            if(snake->dir == up)
                 break;
-            snake.vx = 0;
-            snake.vy = snake.cvy;
-            snake.dir = down;
+            snake->vx = 0;
+            snake->vy = snake->cvy;
+            snake->dir = down;
+            snake->be_moved = 1;
             break;
         default:
             break;
@@ -266,22 +296,8 @@ void handle_key(int inp)
 
 void handle_food(struct win_s *scrn)
 {
-/*
- * DELETE IT AFTERWARDS!
- 
-    int r = rand_r(&seed);
-    int x = 1 + (int) (((float)(scrn->w - 2) * rand_r(&seed)) / (RAND_MAX ));
-    int y = 1 + (int) (((float)(scrn->h - 2) * rand_r(&seed)) / (RAND_MAX ));
- */
-
     int x = 1 + rand_r(&seed) / (RAND_MAX  / (scrn->w - 2)) ;
     int y = 1 + rand_r(&seed) / (RAND_MAX  / (scrn->h - 2)) ;
-
-/*
-    fprintf(fd1, "x - %d, y - %d, scrn w - %d, scrn h - %d, r  - %d\n", x, y, scrn->w, scrn->h, x);
-    int x = scrn->x + rand_r(&seed) * (scrn->w - scrn->y) / RAND_MAX; 
-    int y = scrn->y + rand_r(&seed) * (scrn->h - scrn->y) / RAND_MAX; 
-*/
     scrn->win[scrn->w * y + x] = food; 
 }
 
@@ -291,13 +307,40 @@ float get_elapsed_time(struct timespec *t1, struct timespec *t2)
 }
 
 void handle_snake_collision(struct snake_s *snake, struct win_s *screen) {
-    if(collide((*snake), (*screen), brd_v) || collide((*snake), (*screen), brd_h)) {
-        snake->x -= snake->vx * game_state.elapsed_time;
-        snake->y -= snake->vy * game_state.elapsed_time; 
+    if(collide(snake->nx, snake->ny, (*screen), brd_v) || 
+       collide(snake->nx, snake->ny, (*screen), brd_h) ||
+       collide(snake->nx, snake->ny, (*screen), s_bdy)) {
+
+        snake->nx -= snake->vx * game_state.elapsed_time;
+        snake->ny -= snake->vy * game_state.elapsed_time; 
+
         snake->vx = 0; snake->vy = 0;
+        snake->be_moved = 0;
     }
-    if(collide((*snake), (*screen), food)) {
+    else if(collide(snake->nx, snake->ny, (*screen), food)) {
         game_state.score++;
         change_food_cntr(&game_state, --);
+        enlen_snake(snake);
     }
+}
+
+void enlen_snake(struct snake_s *snake) 
+{
+    struct snake_part_s *tmp = calloc(1, sizeof(*tmp)); 
+    //memcpy(tmp, snake->tail, sizeof(*tmp));
+    tmp->next = NULL;
+    tmp->x = snake->tail->x;
+    tmp->y = snake->tail->y;
+    tmp->bdy = s_bdy;
+    snake->tail->next = tmp;
+    snake->tail = tmp;
+}
+
+void mv_snake(struct snake_part_s *snkprt, float x, float y, struct win_s *win) {
+    draw_cell(*win, (int)snkprt->x, (int)snkprt->y, blank);
+    if(snkprt->next)
+        mv_snake(snkprt->next, snkprt->x, snkprt->y, win); 
+    snkprt->x = x;
+    snkprt->y = y;
+    draw_cell(*win, (int)snkprt->x, (int)snkprt->y, snkprt->bdy);
 }
