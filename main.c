@@ -4,7 +4,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
- 
+
+
+FILE *fd1; 
+
 #define collide(obj, scr,  cell) (scr.win[scr.w * (int)obj.y+(int)obj.x]==cell)
 #define need_to_add_food(gs) ((gs)->foods < (gs)->max_food)
 
@@ -167,6 +170,7 @@ int main(void)
     game_win.win[game_win.w * (int)snake.y + (int)snake.x] = s_head;
      
     FILE *fd = fopen("log.txt", "w");
+    fd1 = fopen("log.txt", "w");
     fprintf(fd, "x - %d, y - %d, scr x - %d, scr y - %d\n", win.w , win.h, screen.w, screen.h);
     //fprintf(fd, "x - %d, y - %d, sx - %f, ys - %f, sizeof - %ld\n", screen.w, screen.h, snake.x, snake.y, sizeof((*screen.screen)));
     //fprintf(fd, "x - %d, y - %d, sx - %d, ys - %d\n", x, y, snake.x, snake.y);
@@ -187,6 +191,7 @@ int main(void)
         if(need_to_add_food(&game_state))
             handle_food(&game_win);
 
+        //fprintf(fd, "%d - %d\n", game_state.foods, game_state.max_food);
         game_win.win[game_win.w * (int)snake.y + (int)snake.x] = blank;
         snake.x += snake.vx * game_state.elapsed_time;
         snake.y += snake.vy * game_state.elapsed_time; 
@@ -271,11 +276,23 @@ void handle_key(int inp)
 
 void handle_food(struct win_s *scrn)
 {
-    int x = scrn->w + (int) (((float)(scrn->w) * rand_r(&seed)) / (RAND_MAX + 1.0));
-    int y = scrn->h + (int) (((float)(scrn->h) * rand_r(&seed)) / (RAND_MAX + 1.0));
-    
+/*
+ * DELETE IT AFTERWARDS!
+ 
+    int r = rand_r(&seed);
+    int x = 1 + (int) (((float)(scrn->w - 2) * rand_r(&seed)) / (RAND_MAX ));
+    int y = 1 + (int) (((float)(scrn->h - 2) * rand_r(&seed)) / (RAND_MAX ));
+ */
+
+    int x = 1 + rand_r(&seed) / (RAND_MAX  / (scrn->w - 2)) ;
+    int y = 1 + rand_r(&seed) / (RAND_MAX  / (scrn->h - 2)) ;
+
+/*
+    fprintf(fd1, "x - %d, y - %d, scrn w - %d, scrn h - %d, r  - %d\n", x, y, scrn->w, scrn->h, x);
+    int x = scrn->x + rand_r(&seed) * (scrn->w - scrn->y) / RAND_MAX; 
+    int y = scrn->y + rand_r(&seed) * (scrn->h - scrn->y) / RAND_MAX; 
+*/
     scrn->win[scrn->w * y + x] = food; 
-    
 }
 
 float get_elapsed_time(struct timespec *t1, struct timespec *t2)
