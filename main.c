@@ -9,8 +9,10 @@
 FILE *fd1; 
 
 #define collide(obj, scr,  cell) (scr.win[scr.w * (int)obj.y+(int)obj.x]==cell)
+
 #define need_to_add_food(gs) ((gs)->foods < (gs)->max_food)
 #define change_food_cntr(gs, how) (((gs)->foods)how)
+
 #define update_txt(...) sprintf( __VA_ARGS__ );
 #define init_txt(obj, width)      \
         struct txt_s obj = { 0 }; \
@@ -19,13 +21,34 @@ FILE *fd1;
 #define mv_txt(txt, tx, ty);      \
         (txt)->x = tx;            \
         (txt)->y = ty               
-
 #define SCORE_TXT "score: %04d"
 #define SCORE_TXT_W (sizeof(SCORE_TXT)+4)
 #define LEVEL_TXT "level: %04d"
 #define LEVEL_TXT_W (sizeof(LEVEL_TXT)+4)
 #define TITLE_TXT "CMDSNK by soangrypanda"
 #define TITLE_TXT_W (sizeof(TITLE_TXT))
+
+#define init_win(wind, wx, wy, ww, wh)\
+    struct win_s wind = { 0 };        \
+    wind.x = wx;                      \
+    wind.y = wy;                      \
+    wind.w = ww;                      \
+    wind.h = wh;                      \
+    wind.win =  calloc((wind.w) * (wind.h) + 1, sizeof(*(wind.win))); \
+    memset(wind.win, blank, wind.w*wind.h)
+
+#define draw_win_brdr(wind, bv, bh)                      \
+    for(int h = 0; h < wind.h; ++h) {                   \
+        wind.win[h * wind.w] = bv;                      \
+        wind.win[h * wind.w + wind.w - 1] = bv;         \
+    }                                                   \
+    for(int w = 0; w < wind.w; ++w) {                   \
+        wind.win[w] = bh;                               \
+        wind.win[wind.w * wind.h - wind.w + w] = bh;    \
+    }                                                   \
+    wind.win[wind.w*wind.h] = '\0'
+
+
 
 unsigned int seed;  
 
@@ -82,75 +105,35 @@ int main(void)
     struct screen_s screen = { 0 };
     init_mainscreen(&screen);
     
-    struct win_s win = { 0 };
-    win.w = screen.w; 
-    win.x = 0;
-    win.y = 0;
-    
     init_txt(score, sizeof(SCORE_TXT) + 2);
     update_txt(score.txt, SCORE_TXT, game_state.score); 
-    
     init_txt(level, sizeof(LEVEL_TXT) + 2);
     update_txt(level.txt, LEVEL_TXT, game_state.level); 
-
     init_txt(title, TITLE_TXT_W);
     update_txt(title.txt, TITLE_TXT); 
 
+    int win_h = 6;
+    if(score.w+level.w+title.w< screen.w-2) 
+        win_h = 4; 
+    init_win(win, 0,0,screen.w,win_h);
+
     if(score.w+level.w+title.w< screen.w-2) {
-        win.h = 4; 
         mv_txt(&score, 2, win.y + 2);
         mv_txt(&level, win.w - level.w + 1, win.y + 2);
         mv_txt(&title, win.w / 2 - title.w / 2, win.y);
     }
     else {
-        win.h = 6; 
         mv_txt(&score, 2, win.y + 2);
         mv_txt(&level, 2, win.y + 4);
         mv_txt(&title, win.w / 2 - title.w / 2, win.y);
     }
 
-    struct win_s game_win = { 0 };
-    game_win.x = 0;
-    game_win.y = win.h;
-    game_win.w = screen.w;
-    game_win.h = screen.h - game_win.y; 
-   
-    /* draw_win_brdr */ 
-    win.win = calloc((win.w) * (win.h) + 1, sizeof(*(win.win)));
-    memset(win.win, blank, win.w*win.h);
-    for(int h = 0; h < win.h; ++h) {
-        win.win[h * win.w] = brd_v;
-        win.win[h * win.w + win.w - 1] = brd_v; 
-    }
-    for(int w = 0; w < win.w; ++w) {
-        win.win[w] = brd_h;
-        win.win[win.w * win.h - win.w + w] = brd_h;
-    } 
-    win.win[win.w*win.h] = '\0';
+    init_win(game_win, 0, win.h, screen.w, screen.h-game_win.y);
 
-    game_win.win = calloc((game_win.w) * (game_win.h) + 1, sizeof(*(game_win.win)));
-    memset(game_win.win, blank, game_win.w*game_win.h);
-    for(int h = 0; h < game_win.h; ++h) {
-        game_win.win[h * game_win.w] = brd_v;
-        game_win.win[h * game_win.w + game_win.w - 1] = brd_v; 
-    }
-    for(int w = 0; w < game_win.w; ++w) {
-        game_win.win[w] = brd_h;
-        game_win.win[game_win.w * game_win.h - game_win.w + w] = brd_h;
-    } 
-    game_win.win[game_win.w*game_win.h] = '\0';
-/*
-    for(int h=0; h < screen.h; ++h) {
-        screen.screen[h * screen.w] = brd_v;
-        screen.screen[h * screen.w + screen.w-1] = brd_v;
-    }
-    for(int w=0; w < screen.w; ++w) {
-        screen.screen[w] = brd_h;
-        screen.screen[screen.w*screen.h-screen.w+w] = brd_h; 
-        screen.screen[screen.w * win.y+w] = brd_h;
-        screen.screen[screen.w * (win.y+win.h)+w] = brd_h;
-    }
-*/   
+    /* draw_win_brdr */ 
+    draw_win_brdr(win, brd_v, brd_h);
+    draw_win_brdr(game_win, brd_v, brd_h);
+
     game_state.game_on = 1;
     game_state.max_food = 1; 
 
