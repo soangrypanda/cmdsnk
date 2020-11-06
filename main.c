@@ -37,7 +37,7 @@ FILE *fd1;
     wind.win =  calloc((wind.w) * (wind.h) + 1, sizeof(*(wind.win))); \
     memset(wind.win, blank, wind.w*wind.h)
 
-#define draw_win_brdr(wind, bv, bh)                      \
+#define draw_win_brdr(wind, bv, bh)                     \
     for(int h = 0; h < wind.h; ++h) {                   \
         wind.win[h * wind.w] = bv;                      \
         wind.win[h * wind.w + wind.w - 1] = bv;         \
@@ -48,6 +48,7 @@ FILE *fd1;
     }                                                   \
     wind.win[wind.w*wind.h] = '\0'
 
+#define draw_cell(wind, x, y, cont) (wind.win[wind.w * (y) + (x)] = cont)
 
 
 unsigned int seed;  
@@ -168,25 +169,28 @@ int main(void)
         //fprintf(fd, "et = %f\n", elapsed_time);
  
         handle_key(getch());
+
         if(need_to_add_food(&game_state)) {
             handle_food(&game_win);
             change_food_cntr(&game_state, ++);
         }
+
         //fprintf(fd, "%d - %d\n", game_state.foods, game_state.max_food);
-        game_win.win[game_win.w * (int)snake.y + (int)snake.x] = blank;
+
+        draw_cell(game_win, (int)snake.x, (int)snake.y, blank);
+
         snake.x += snake.vx * game_state.elapsed_time;
         snake.y += snake.vy * game_state.elapsed_time; 
         
         handle_snake_collision(&snake, &game_win);
             
-        game_win.win[game_win.w * (int)snake.y + (int)snake.x] = s_head;
+        draw_cell(game_win, (int)snake.x, (int)snake.y, s_head);
 
         update_txt(score.txt, SCORE_TXT, game_state.score); 
         update_txt(level.txt, LEVEL_TXT, game_state.level); 
 
         mvaddstr(win.y, win.x, win.win);
         mvaddstr(game_win.y, game_win.x, game_win.win);
-        //mvaddstr(0,0,screen.screen); 
         mvaddstr(score.y,score.x,score.txt);
         mvaddstr(level.y,level.x,level.txt);
         mvaddstr(title.y,title.x,title.txt);
@@ -199,6 +203,7 @@ int main(void)
     free(score.txt);
     free(level.txt);
     free(title.txt);
+
     endwin();
     return EXIT_SUCCESS;
 }
