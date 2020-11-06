@@ -10,6 +10,9 @@ FILE *fd1;
 
 #define collide(obj, scr,  cell) (scr.win[scr.w * (int)obj.y+(int)obj.x]==cell)
 #define need_to_add_food(gs) ((gs)->foods < (gs)->max_food)
+#define change_food_cntr(gs, how) (((gs)->foods)how)
+#define update_txt(dest, txt, res) \
+        sprintf(dest, txt, res);
 
 #define SCORE_TXT "score: %04d"
 #define SCORE_TXT_W (sizeof(SCORE_TXT)+4)
@@ -80,10 +83,11 @@ int main(void)
     struct txt_s score = { 0 };
     struct txt_s level = { 0 };
     struct txt_s title = { 0 }; 
-     
+    
     score.w = sizeof(SCORE_TXT) + 2;
     score.txt = malloc(score.w);
-    sprintf(score.txt, SCORE_TXT, game_state.score);
+    update_txt(score.txt, SCORE_TXT, game_state.score); 
+    //sprintf(score.txt, SCORE_TXT, game_state.score);
     
     level.w = sizeof(SCORE_TXT) + 2;
     level.txt = malloc(level.w);
@@ -188,9 +192,10 @@ int main(void)
         //fprintf(fd, "et = %f\n", elapsed_time);
  
         handle_key(getch());
-        if(need_to_add_food(&game_state))
+        if(need_to_add_food(&game_state)) {
             handle_food(&game_win);
-
+            change_food_cntr(&game_state, ++);
+        }
         //fprintf(fd, "%d - %d\n", game_state.foods, game_state.max_food);
         game_win.win[game_win.w * (int)snake.y + (int)snake.x] = blank;
         snake.x += snake.vx * game_state.elapsed_time;
@@ -199,6 +204,9 @@ int main(void)
         handle_snake_collision(&snake, &game_win);
             
         game_win.win[game_win.w * (int)snake.y + (int)snake.x] = s_head;
+
+        update_txt(score.txt, SCORE_TXT, game_state.score); 
+
         mvaddstr(win.y, win.x, win.win);
         mvaddstr(game_win.y, game_win.x, game_win.win);
         //mvaddstr(0,0,screen.screen); 
@@ -308,5 +316,6 @@ void handle_snake_collision(struct snake_s *snake, struct win_s *screen) {
     }
     if(collide((*snake), (*screen), food)) {
         game_state.score++;
+        change_food_cntr(&game_state, --);
     }
 }
