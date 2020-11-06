@@ -11,8 +11,7 @@ FILE *fd1;
 #define collide(obj, scr,  cell) (scr.win[scr.w * (int)obj.y+(int)obj.x]==cell)
 #define need_to_add_food(gs) ((gs)->foods < (gs)->max_food)
 #define change_food_cntr(gs, how) (((gs)->foods)how)
-#define update_txt(dest, txt, res) \
-        sprintf(dest, txt, res);
+#define update_txt(...) sprintf( __VA_ARGS__ );
 
 #define SCORE_TXT "score: %04d"
 #define SCORE_TXT_W (sizeof(SCORE_TXT)+4)
@@ -87,15 +86,15 @@ int main(void)
     score.w = sizeof(SCORE_TXT) + 2;
     score.txt = malloc(score.w);
     update_txt(score.txt, SCORE_TXT, game_state.score); 
-    //sprintf(score.txt, SCORE_TXT, game_state.score);
     
     level.w = sizeof(SCORE_TXT) + 2;
     level.txt = malloc(level.w);
-    sprintf(level.txt, LEVEL_TXT, game_state.score);
+    update_txt(level.txt, LEVEL_TXT, game_state.level); 
 
     title.w = TITLE_TXT_W;
     title.txt = malloc(title.w);
-    sprintf(title.txt, TITLE_TXT);
+    update_txt(title.txt, TITLE_TXT); 
+    //sprintf(title.txt, TITLE_TXT);
          
     if(score.w+level.w+title.w< screen.w-2) {
         win.h = 4; 
@@ -206,6 +205,7 @@ int main(void)
         game_win.win[game_win.w * (int)snake.y + (int)snake.x] = s_head;
 
         update_txt(score.txt, SCORE_TXT, game_state.score); 
+        update_txt(level.txt, SCORE_TXT, game_state.level); 
 
         mvaddstr(win.y, win.x, win.win);
         mvaddstr(game_win.y, game_win.x, game_win.win);
