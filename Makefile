@@ -4,4 +4,4 @@ main: main.c $(OBJECTS)
 	gcc $(CFLAGS) main.c $(OBJECTS) $(CLIBS) -o main
 
 clean:
-	rm -f main *.o
+	rm -f main *.o log*

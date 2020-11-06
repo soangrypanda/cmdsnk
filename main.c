@@ -12,6 +12,13 @@ FILE *fd1;
 #define need_to_add_food(gs) ((gs)->foods < (gs)->max_food)
 #define change_food_cntr(gs, how) (((gs)->foods)how)
 #define update_txt(...) sprintf( __VA_ARGS__ );
+#define init_txt(obj, width)      \
+        struct txt_s obj = { 0 }; \
+        obj.w = width;            \
+        obj.txt = malloc(obj.w)  
+#define mv_txt(txt, tx, ty);      \
+        txt.x = tx;               \
+        txt.y = ty               
 
 #define SCORE_TXT "score: %04d"
 #define SCORE_TXT_W (sizeof(SCORE_TXT)+4)
@@ -79,40 +86,27 @@ int main(void)
     win.w = screen.w; 
     win.x = 0;
     win.y = 0;
-    struct txt_s score = { 0 };
-    struct txt_s level = { 0 };
-    struct txt_s title = { 0 }; 
     
-    score.w = sizeof(SCORE_TXT) + 2;
-    score.txt = malloc(score.w);
+    init_txt(score, sizeof(SCORE_TXT) + 2);
     update_txt(score.txt, SCORE_TXT, game_state.score); 
     
-    level.w = sizeof(SCORE_TXT) + 2;
-    level.txt = malloc(level.w);
+    init_txt(level, sizeof(LEVEL_TXT) + 2);
     update_txt(level.txt, LEVEL_TXT, game_state.level); 
 
-    title.w = TITLE_TXT_W;
-    title.txt = malloc(title.w);
+    init_txt(title, TITLE_TXT_W);
     update_txt(title.txt, TITLE_TXT); 
-    //sprintf(title.txt, TITLE_TXT);
-         
+
     if(score.w+level.w+title.w< screen.w-2) {
         win.h = 4; 
-        score.x = 2;
-        score.y = win.y + 2;
-        level.x = win.w - level.w + 1;
-        level.y = win.y + 2;
-        title.x = win.w / 2 - title.w / 2;
-        title.y = win.y;
+        mv_txt(score, 2, win.y + 2);
+        mv_txt(level, win.w - level.w + 1, win.y + 2);
+        mv_txt(title, win.w / 2 - title.w / 2, win.y);
     }
     else {
         win.h = 6; 
-        score.x = 2;
-        score.y = win.y + 2;
-        level.x = 2;
-        level.y = win.y + 4;
-        title.x = win.w / 2 - title.w / 2;
-        title.y = win.y;
+        mv_txt(score, 2, win.y + 2);
+        mv_txt(level, 2, win.y + 4);
+        mv_txt(title, win.w / 2 - title.w / 2, win.y);
     }
 
     struct win_s game_win = { 0 };
@@ -205,7 +199,7 @@ int main(void)
         game_win.win[game_win.w * (int)snake.y + (int)snake.x] = s_head;
 
         update_txt(score.txt, SCORE_TXT, game_state.score); 
-        update_txt(level.txt, SCORE_TXT, game_state.level); 
+        update_txt(level.txt, LEVEL_TXT, game_state.level); 
 
         mvaddstr(win.y, win.x, win.win);
         mvaddstr(game_win.y, game_win.x, game_win.win);
