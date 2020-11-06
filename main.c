@@ -17,8 +17,8 @@ FILE *fd1;
         obj.w = width;            \
         obj.txt = malloc(obj.w)  
 #define mv_txt(txt, tx, ty);      \
-        txt.x = tx;               \
-        txt.y = ty               
+        (txt)->x = tx;            \
+        (txt)->y = ty               
 
 #define SCORE_TXT "score: %04d"
 #define SCORE_TXT_W (sizeof(SCORE_TXT)+4)
@@ -98,15 +98,15 @@ int main(void)
 
     if(score.w+level.w+title.w< screen.w-2) {
         win.h = 4; 
-        mv_txt(score, 2, win.y + 2);
-        mv_txt(level, win.w - level.w + 1, win.y + 2);
-        mv_txt(title, win.w / 2 - title.w / 2, win.y);
+        mv_txt(&score, 2, win.y + 2);
+        mv_txt(&level, win.w - level.w + 1, win.y + 2);
+        mv_txt(&title, win.w / 2 - title.w / 2, win.y);
     }
     else {
         win.h = 6; 
-        mv_txt(score, 2, win.y + 2);
-        mv_txt(level, 2, win.y + 4);
-        mv_txt(title, win.w / 2 - title.w / 2, win.y);
+        mv_txt(&score, 2, win.y + 2);
+        mv_txt(&level, 2, win.y + 4);
+        mv_txt(&title, win.w / 2 - title.w / 2, win.y);
     }
 
     struct win_s game_win = { 0 };
