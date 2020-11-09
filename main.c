@@ -27,6 +27,12 @@ FILE *fd1;
 #define LEVEL_TXT_W (sizeof(LEVEL_TXT)+4)
 #define TITLE_TXT "CMDSNK by soangrypanda"
 #define TITLE_TXT_W (sizeof(TITLE_TXT))
+#define G_WON_TXT "YOU WON CMDSNK!"
+#define G_WON_TXT_W (sizeof(G_WON_TXT))
+#define G_LOS_TXT "G, MORE LUCK NEXT TIME!"
+#define G_LOS_TXT_W (sizeof(G_LOS_TXT))
+#define RETRY_TXT "RETRY? y / n"
+#define RETRY_TXT_W (sizeof(RETRY_TXT))
 
 #define SNAKE_SPEED_INCR_STRIDE 2 
 /* --- NEED TO THINK ABOUT POSSIBILITY OF DRAWING WINS SEPARATELLY --- */
@@ -62,6 +68,7 @@ struct game_state_s {
     int score;
     int level;
     int foods, max_food, max_food_cap;
+    enum end_t { won, lost, on } end;
 };
 struct game_state_s game_state = { 0 };
 
@@ -115,6 +122,7 @@ void handle_snake_speed(struct snake_s *snake);
 void mv_snake(struct snake_part_s *snkprt, float x, float y, struct win_s *win);
 void update_game_state();
 int find_better_cell(int *px, int *py, int x, int y, struct win_s *scrn, int cell_needed);
+void declare_game(int what);
 
 int main(void)
 {
@@ -131,6 +139,13 @@ int main(void)
     init_txt(title, TITLE_TXT_W);
     update_txt(title.txt, TITLE_TXT); 
 
+    init_txt(g_won, G_WON_TXT_W + 2);
+    update_txt(g_won.txt, G_WON_TXT); 
+    init_txt(g_los, G_LOS_TXT_W);
+    update_txt(g_los.txt, G_LOS_TXT); 
+    init_txt(retry, RETRY_TXT_W);
+    update_txt(retry.txt, RETRY_TXT); 
+
     int win_h = 6;
     if(score.w+level.w+title.w< screen.w-2) 
         win_h = 4; 
@@ -146,6 +161,9 @@ int main(void)
         mv_txt(&level, 2, win.y + 4);
         mv_txt(&title, win.w / 2 - title.w / 2, win.y);
     }
+    mv_txt(&g_won, screen.w / 2 - g_won.w / 2, screen.h / 2);
+    mv_txt(&g_los, screen.w / 2 - g_los.w / 2, screen.h / 2);
+    mv_txt(&retry, screen.w / 2 - retry.w / 2, screen.h / 2 + 1);
 
     init_win(game_win, 0, win.h, screen.w, screen.h-game_win.y, &screen);
 
@@ -307,9 +325,19 @@ void handle_food(struct win_s *scrn)
 {
     int x = 1 + rand_r(&seed) / (RAND_MAX  / (scrn->w - 2)) ;
     int y = 1 + rand_r(&seed) / (RAND_MAX  / (scrn->h - 2)) ;
-    if(scrn->win[scrn->w * y + x] != blank) 
-        find_better_cell(&x, &y, x, y, scrn, blank);
+    if(scrn->win[scrn->w * y + x] != blank) {
+        if(0 == find_better_cell(&x, &y, x, y, scrn, blank)) {
+            declare_game(won);
+            return;
+        }
+   } 
     scrn->win[scrn->w * y + x] = food; 
+}
+
+void declare_game(int what) 
+{
+    game_state.end = what;
+    game_state.game_on = 0;
 }
 
 int find_better_cell(int *px, int *py, int x, int y, struct win_s *scrn, int cell_needed)
