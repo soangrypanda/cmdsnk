@@ -28,14 +28,17 @@ FILE *fd1;
 #define TITLE_TXT "CMDSNK by soangrypanda"
 #define TITLE_TXT_W (sizeof(TITLE_TXT))
 
-#define init_win(wind, wx, wy, ww, wh)\
-    struct win_s wind = { 0 };        \
-    wind.x = wx;                      \
-    wind.y = wy;                      \
-    wind.w = ww;                      \
-    wind.h = wh;                      \
-    wind.win =  calloc((wind.w) * (wind.h) + 1, sizeof(*(wind.win))); \
-    memset(wind.win, blank, wind.w*wind.h)
+
+/* --- NEED TO THINK ABOUT POSSIBILITY OF DRAWING WINS SEPARATELLY --- */
+#define init_win(wind, wx, wy, ww, wh, scrn)\
+    struct win_s wind = { 0 };              \
+    wind.x = wx;                            \
+    wind.y = wy;                            \
+    wind.w = ww;                            \
+    wind.h = wh;                            \
+    wind.win = &((scrn)->screen[wy*((scrn)->w)+wx])
+    //wind.win =  calloc((wind.w) * (wind.h) + 1, sizeof(*(wind.win)));
+    //memset(wind.win, blank, wind.w*wind.h)
 
 #define draw_win_brdr(wind, bv, bh)                     \
     for(int h = 0; h < wind.h; ++h) {                   \
@@ -128,7 +131,7 @@ int main(void)
     int win_h = 6;
     if(score.w+level.w+title.w< screen.w-2) 
         win_h = 4; 
-    init_win(win, 0,0,screen.w,win_h);
+    init_win(win, 0,0,screen.w,win_h, &screen);
 
     if(score.w+level.w+title.w< screen.w-2) {
         mv_txt(&score, 2, win.y + 2);
@@ -141,7 +144,7 @@ int main(void)
         mv_txt(&title, win.w / 2 - title.w / 2, win.y);
     }
 
-    init_win(game_win, 0, win.h, screen.w, screen.h-game_win.y);
+    init_win(game_win, 0, win.h, screen.w, screen.h-game_win.y, &screen);
 
     /* draw_win_brdr */ 
     draw_win_brdr(win, brd_v, brd_h);
@@ -215,16 +218,17 @@ int main(void)
         update_txt(score.txt, SCORE_TXT, game_state.score); 
         update_txt(level.txt, LEVEL_TXT, game_state.level); 
 
-        mvaddstr(win.y, win.x, win.win);
-        mvaddstr(game_win.y, game_win.x, game_win.win);
+        //mvaddstr(win.y, win.x, win.win);
+        //mvaddstr(game_win.y, game_win.x, game_win.win);
+        mvaddstr(0, 0, screen.screen);
         mvaddstr(score.y,score.x,score.txt);
         mvaddstr(level.y,level.x,level.txt);
         mvaddstr(title.y,title.x,title.txt);
         refresh();
     }
     free(screen.screen);
-    free(win.win);
-    free(game_win.win);
+    //free(win.win);
+    //free(game_win.win);
 
     free(score.txt);
     free(level.txt);
