@@ -114,7 +114,7 @@ void enlen_snake(struct snake_s *snake);
 void handle_snake_speed(struct snake_s *snake);
 void mv_snake(struct snake_part_s *snkprt, float x, float y, struct win_s *win);
 void update_game_state();
-int find_better_cell(int *px, int *py, struct win_s *scrn, int cell_needed);
+int find_better_cell(int *px, int *py, int x, int y, struct win_s *scrn, int cell_needed);
 
 int main(void)
 {
@@ -308,14 +308,29 @@ void handle_food(struct win_s *scrn)
     int x = 1 + rand_r(&seed) / (RAND_MAX  / (scrn->w - 2)) ;
     int y = 1 + rand_r(&seed) / (RAND_MAX  / (scrn->h - 2)) ;
     if(scrn->win[scrn->w * y + x] != blank) 
-        find_better_cell(&x, &y, scrn, blank);
+        find_better_cell(&x, &y, x, y, scrn, blank);
     scrn->win[scrn->w * y + x] = food; 
 }
 
-int find_better_cell(int *px, int *py, struct win_s *scrn, int cell_needed)
+int find_better_cell(int *px, int *py, int x, int y, struct win_s *scrn, int cell_needed)
 {
-    if(scrn->win[scrn->w * (*py) + (*px)] == cell_needed)
+    if(x <= scrn->x || x >= scrn->w || y <= scrn->y || y >= scrn->h) {
+        return 0;
+    }
+    if(scrn->win[scrn->w * y + x] == cell_needed) {
+        *px = x; *py = y;
         return 1;
+    }
+
+    if(find_better_cell(px, py, x+1, y, scrn, cell_needed))
+        return 1;
+    if(find_better_cell(px, py, x-1, y, scrn, cell_needed))
+        return 1;
+    if(find_better_cell(px, py, x, y+1, scrn, cell_needed))
+        return 1;
+    if(find_better_cell(px, py, x, y-1, scrn, cell_needed))
+        return 1;
+
     return 0;
 }
 
