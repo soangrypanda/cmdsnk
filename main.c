@@ -28,7 +28,7 @@ FILE *fd1;
 #define TITLE_TXT "CMDSNK by soangrypanda"
 #define TITLE_TXT_W (sizeof(TITLE_TXT))
 
-
+#define SNAKE_SPEED_INCR_STRIDE 2 
 /* --- NEED TO THINK ABOUT POSSIBILITY OF DRAWING WINS SEPARATELLY --- */
 #define init_win(wind, wx, wy, ww, wh, scrn)\
     struct win_s wind = { 0 };              \
@@ -61,7 +61,7 @@ struct game_state_s {
     int game_on;
     int score;
     int level;
-    int foods, max_food;
+    int foods, max_food, max_food_cap;
 };
 struct game_state_s game_state = { 0 };
 
@@ -111,7 +111,10 @@ void handle_food(struct win_s *gs);
 float get_elapsed_time(struct timespec *t1, struct timespec *t2);
 void handle_snake_collision(struct snake_s *snake, struct win_s *screen);
 void enlen_snake(struct snake_s *snake);
+void handle_snake_speed(struct snake_s *snake);
 void mv_snake(struct snake_part_s *snkprt, float x, float y, struct win_s *win);
+void update_game_state();
+int find_better_cell(int *px, int *py, struct win_s *scrn, int cell_needed);
 
 int main(void)
 {
@@ -152,6 +155,7 @@ int main(void)
 
     game_state.game_on = 1;
     game_state.max_food = 1; 
+    game_state.max_food_cap = 5; 
     
     struct snake_part_s snkprt = { 0 };
     snkprt.next = NULL;
@@ -214,6 +218,8 @@ int main(void)
         snake.be_moved = 0;
             
         //draw_cell(game_win, (int)snkprt.x, (int)snkprt.y, snkprt.bdy);
+
+        //update_game_state(&game_state);
 
         update_txt(score.txt, SCORE_TXT, game_state.score); 
         update_txt(level.txt, LEVEL_TXT, game_state.level); 
@@ -297,12 +303,20 @@ void handle_key(int inp, struct snake_s *snake)
             break;
     }
 }
-
 void handle_food(struct win_s *scrn)
 {
     int x = 1 + rand_r(&seed) / (RAND_MAX  / (scrn->w - 2)) ;
     int y = 1 + rand_r(&seed) / (RAND_MAX  / (scrn->h - 2)) ;
+    if(scrn->win[scrn->w * y + x] != blank) 
+        find_better_cell(&x, &y, scrn, blank);
     scrn->win[scrn->w * y + x] = food; 
+}
+
+int find_better_cell(int *px, int *py, struct win_s *scrn, int cell_needed)
+{
+    if(scrn->win[scrn->w * (*py) + (*px)] == cell_needed)
+        return 1;
+    return 0;
 }
 
 float get_elapsed_time(struct timespec *t1, struct timespec *t2)
@@ -325,6 +339,8 @@ void handle_snake_collision(struct snake_s *snake, struct win_s *screen) {
         game_state.score++;
         change_food_cntr(&game_state, --);
         enlen_snake(snake);
+        update_game_state();
+        handle_snake_speed(snake);
     }
 }
 
@@ -347,4 +363,22 @@ void mv_snake(struct snake_part_s *snkprt, float x, float y, struct win_s *win) 
     snkprt->x = x;
     snkprt->y = y;
     draw_cell(*win, (int)snkprt->x, (int)snkprt->y, snkprt->bdy);
+}
+
+void handle_snake_speed(struct snake_s *snake)
+{
+    if((game_state.level + game_state.score) % 8 == 0) {
+        snake->cvx += snake->dvx * SNAKE_SPEED_INCR_STRIDE;
+        snake->cvy += snake->dvy * SNAKE_SPEED_INCR_STRIDE;
+    }
+}
+
+void update_game_state()
+{
+    if(game_state.score % 10 == 0) {
+        game_state.level++;
+        if(game_state.max_food < game_state.max_food_cap) {
+            game_state.max_food++;
+        }
+    }
 }
