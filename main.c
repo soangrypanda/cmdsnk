@@ -139,6 +139,7 @@ void handle_snake_collision(struct snake_s *snake, struct win_s *screen);
 void enlen_snake(struct snake_s *snake);
 void handle_snake_speed(struct snake_s *snake);
 void mv_snake(struct snake_part_s *snkprt, float x, float y, struct win_s *win);
+void delete_snake(struct snake_s *snake);
 void update_game_state();
 int find_better_cell(int *px, int *py, int x, int y, struct win_s *scrn, int cell_needed);
 void declare_game(int what);
@@ -187,7 +188,7 @@ int main(void)
     init_win(game_win, 0, win.h, screen.w, screen.h-game_win.y, &screen);
 
 
-    struct snake_part_s snkprt = { 0 };
+    //struct snake_part_s snkprt = { 0 };
     struct snake_s snake = { 0 };
     struct timespec t1 = { 0 };
     struct timespec t2 = { 0 };
@@ -202,25 +203,26 @@ MAINLOOP_RESTART_POSITION
     game_state.max_food = 1; 
     game_state.max_food_cap = 5; 
     
-    snkprt.next = NULL;
-    snkprt.x = game_win.w / 2;
-    snkprt.y = game_win.h / 2;
-    snkprt.bdy = s_head;
+    struct snake_part_s *snkprt = calloc(1, sizeof(struct snake_part_s));
+    snkprt->next = NULL;
+    snkprt->x = game_win.w / 2;
+    snkprt->y = game_win.h / 2;
+    snkprt->bdy = s_head;
 
-    snake.head = &snkprt;
-    snake.tail = &snkprt;
+    snake.head = snkprt;
+    snake.tail = snkprt;
     snake.vx = 0;
     snake.vy = 0;
     snake.cvx = 12;
     snake.cvy = 8;
     snake.dvx = 1;
     snake.dvy = 0.6;
-    snake.nx = snkprt.x; 
-    snake.ny = snkprt.y;
+    snake.nx = snkprt->x; 
+    snake.ny = snkprt->y;
     snake.be_moved = 0;
     snake.dir = none; 
     
-    draw_cell(game_win, (int)snkprt.x, (int)snkprt.y, snkprt.bdy);
+    draw_cell(game_win, (int)snkprt->x, (int)snkprt->y, snkprt->bdy);
      
     FILE *fd = fopen("log.txt", "w");
     fd1 = fopen("log.txt", "w");
@@ -273,6 +275,8 @@ MAINLOOP_RESTART_POSITION
         mvaddstr(title.y,title.x,title.txt);
         refresh();
     }
+    
+delete_snake(&snake);
     switch(game_state.state) {
         case(ext):
             break;
@@ -458,6 +462,17 @@ void handle_snake_speed(struct snake_s *snake)
         snake->cvx += snake->dvx * SNAKE_SPEED_INCR_STRIDE;
         snake->cvy += snake->dvy * SNAKE_SPEED_INCR_STRIDE;
     }
+}
+
+void delete_snake(struct snake_s *snake)
+{
+    struct snake_part_s *tmp;
+    while(snake->head) {
+        tmp = snake->head;
+        snake->head = snake->head->next;
+        free(tmp);
+    } 
+    snake->head = snake->tail = NULL; 
 }
 
 void update_game_state()
