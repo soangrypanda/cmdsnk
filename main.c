@@ -66,6 +66,19 @@ FILE *fd1;
 
 #define MAINLOOP_RESTART_POSITION restart_pos:
 #define RESTART_MAINLOOP goto restart_pos
+#define ASK_FOR_RESTART do {                \
+    timeout(-1);                            \
+    int k;                                  \
+    while( (k = getch()) ) {                \
+        if(k == 'y' || k == 'Y') {          \
+            timeout(0);                     \
+            RESTART_MAINLOOP;               \
+        }                                   \
+        else if(k == 'n' || k == 'N') {     \
+            break;                          \
+        }                                   \
+    }                                       \
+    } while(0)
 
 unsigned int seed;  
 
@@ -276,17 +289,8 @@ MAINLOOP_RESTART_POSITION
             break;
     }
 
-    timeout(-1);
-    int k;
-    while( (k = getch()) ) {
-        if(k == 'y' || k == 'Y') {
-            timeout(0);
-            RESTART_MAINLOOP;
-        }
-        else if(k == 'n' || k == 'N') {
-            break;
-        }
-    }
+    if(game_state.state != ext)
+        ASK_FOR_RESTART;
 
     free(screen.win);
     //free(win.win);
