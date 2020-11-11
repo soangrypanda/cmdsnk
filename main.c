@@ -64,11 +64,10 @@ unsigned int seed;
 
 struct game_state_s {
     float elapsed_time;
-    int game_on;
     int score;
     int level;
     int foods, max_food, max_food_cap;
-    enum end_t { won, lost, on } end;
+    enum state_t { won, lost, on, ext } state;
 };
 struct game_state_s game_state = { 0 };
 
@@ -171,7 +170,7 @@ int main(void)
     draw_win_brdr(win, brd_v, brd_h);
     draw_win_brdr(game_win, brd_v, brd_h);
 
-    game_state.game_on = 1;
+    game_state.state = on;
     game_state.max_food = 1; 
     game_state.max_food_cap = 5; 
     
@@ -209,7 +208,7 @@ int main(void)
     clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
     clock_gettime(CLOCK_MONOTONIC_RAW, &t2);
     
-    while(game_state.game_on) {
+    while(game_state.state == on) {
         clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
         game_state.elapsed_time = get_elapsed_time(&t1, &t2);        
         memcpy(&t2, &t1, sizeof(t1));
@@ -283,7 +282,7 @@ void handle_key(int inp, struct snake_s *snake)
 {
     switch(inp){
         case(' '):
-            game_state.game_on = 0; 
+            game_state.state = ext; 
             break;
         case('l'):
             if(snake->dir == left)
@@ -336,8 +335,7 @@ void handle_food(struct win_s *scrn)
 
 void declare_game(int what) 
 {
-    game_state.end = what;
-    game_state.game_on = 0;
+    game_state.state = what;
 }
 
 int find_better_cell(int *px, int *py, int x, int y, struct win_s *scrn, int cell_needed)
