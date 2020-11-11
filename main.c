@@ -249,6 +249,24 @@ int main(void)
         mvaddstr(title.y,title.x,title.txt);
         refresh();
     }
+    switch(game_state.state) {
+        case(won):
+            mvaddstr(g_won.y, g_won.x, g_won.txt);        
+            break;
+        case(lost):
+            mvaddstr(g_los.y, g_los.x, g_los.txt);        
+            break;
+        case(ext):
+        case(on):
+        default:
+            break;
+    }
+    if(game_state.state != ext) {
+        mvaddstr(retry.y, retry.x, retry.txt);        
+    }
+    timeout(-1);
+    getch(); 
+
     free(screen.screen);
     //free(win.win);
     //free(game_win.win);
@@ -375,6 +393,7 @@ void handle_snake_collision(struct snake_s *snake, struct win_s *screen) {
 
         snake->vx = 0; snake->vy = 0;
         snake->be_moved = 0;
+        declare_game(lost);
     }
     else if(collide(snake->nx, snake->ny, (*screen), food)) {
         game_state.score++;
