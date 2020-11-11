@@ -42,7 +42,7 @@ FILE *fd1;
     wind.y = wy;                            \
     wind.w = ww;                            \
     wind.h = wh;                            \
-    wind.win = &((scrn)->screen[wy*((scrn)->w)+wx])
+    wind.win = &((scrn)->win[wy*((scrn)->w)+wx])
     //wind.win =  calloc((wind.w) * (wind.h) + 1, sizeof(*(wind.win)));
     //memset(wind.win, blank, wind.w*wind.h)
 
@@ -57,8 +57,15 @@ FILE *fd1;
     }                                                   \
     wind.win[wind.w*wind.h] = '\0'
 
+
+#define fill_win_with(what, where)                      \
+    memset((where)->win, what, (where)->h * (where)->w);\
+    (where)->win[(where)->h*(where)->w] = '\0'
+
 #define draw_cell(wind, x, y, cont) ((wind).win[(wind).w * (y) + (x)] = cont)
 
+#define MAINLOOP_RESTART_POSITION restart_pos:
+#define RESTART_MAINLOOP goto restart_pos
 
 unsigned int seed;  
 
@@ -111,7 +118,7 @@ enum cells {blank = '.', s_head = '@', s_bdy = '0', food = '^', brd_h = '-', brd
 
 
 void initcurses(void);
-void init_mainscreen(struct screen_s *screen);
+void init_mainscreen(struct win_s *screen);
 void handle_key(int inp, struct snake_s * snake);
 void handle_food(struct win_s *gs);
 float get_elapsed_time(struct timespec *t1, struct timespec *t2);
@@ -128,7 +135,7 @@ int main(void)
     seed = time(NULL);
     initcurses();
 
-    struct screen_s screen = { 0 };
+    struct win_s screen = { 0 };
     init_mainscreen(&screen);
     
     init_txt(score, sizeof(SCORE_TXT) + 2);
@@ -166,7 +173,15 @@ int main(void)
 
     init_win(game_win, 0, win.h, screen.w, screen.h-game_win.y, &screen);
 
-    /* draw_win_brdr */ 
+
+    struct snake_part_s snkprt = { 0 };
+    struct snake_s snake = { 0 };
+    struct timespec t1 = { 0 };
+    struct timespec t2 = { 0 };
+
+MAINLOOP_RESTART_POSITION
+
+    fill_win_with(blank, &screen);
     draw_win_brdr(win, brd_v, brd_h);
     draw_win_brdr(game_win, brd_v, brd_h);
 
@@ -174,13 +189,11 @@ int main(void)
     game_state.max_food = 1; 
     game_state.max_food_cap = 5; 
     
-    struct snake_part_s snkprt = { 0 };
     snkprt.next = NULL;
     snkprt.x = game_win.w / 2;
     snkprt.y = game_win.h / 2;
     snkprt.bdy = s_head;
 
-    struct snake_s snake = { 0 };
     snake.head = &snkprt;
     snake.tail = &snkprt;
     snake.vx = 0;
@@ -201,10 +214,8 @@ int main(void)
     fprintf(fd, "x - %d, y - %d, scr x - %d, scr y - %d\n", win.w , win.h, screen.w, screen.h);
     //fprintf(fd, "x - %d, y - %d, sx - %f, ys - %f, sizeof - %ld\n", screen.w, screen.h, snake.x, snake.y, sizeof((*screen.screen)));
     //fprintf(fd, "x - %d, y - %d, sx - %d, ys - %d\n", x, y, snake.x, snake.y);
-    
 
-    struct timespec t1 = { 0 };
-    struct timespec t2 = { 0 };
+
     clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
     clock_gettime(CLOCK_MONOTONIC_RAW, &t2);
     
@@ -243,37 +254,50 @@ int main(void)
 
         //mvaddstr(win.y, win.x, win.win);
         //mvaddstr(game_win.y, game_win.x, game_win.win);
-        mvaddstr(0, 0, screen.screen);
+        mvaddstr(0, 0, screen.win);
         mvaddstr(score.y,score.x,score.txt);
         mvaddstr(level.y,level.x,level.txt);
         mvaddstr(title.y,title.x,title.txt);
         refresh();
     }
     switch(game_state.state) {
+        case(ext):
+            break;
         case(won):
             mvaddstr(g_won.y, g_won.x, g_won.txt);        
+            mvaddstr(retry.y, retry.x, retry.txt);        
             break;
         case(lost):
             mvaddstr(g_los.y, g_los.x, g_los.txt);        
+            mvaddstr(retry.y, retry.x, retry.txt);        
             break;
-        case(ext):
         case(on):
         default:
             break;
     }
-    if(game_state.state != ext) {
-        mvaddstr(retry.y, retry.x, retry.txt);        
-    }
-    timeout(-1);
-    getch(); 
 
-    free(screen.screen);
+    timeout(-1);
+    int k;
+    while( (k = getch()) ) {
+        if(k == 'y' || k == 'Y') {
+            timeout(0);
+            RESTART_MAINLOOP;
+        }
+        else if(k == 'n' || k == 'N') {
+            break;
+        }
+    }
+
+    free(screen.win);
     //free(win.win);
     //free(game_win.win);
 
     free(score.txt);
     free(level.txt);
     free(title.txt);
+    free(g_won.txt);
+    free(g_los.txt);
+    free(retry.txt);
 
     endwin();
     return EXIT_SUCCESS;
@@ -288,12 +312,11 @@ void initcurses(void)
     keypad(stdscr, 1); 
     timeout(0);
 }
-void init_mainscreen(struct screen_s *screen)
+void init_mainscreen(struct win_s *screen)
 {
+    screen->x = screen->y = 0;
     getmaxyx(stdscr, screen->h, screen->w);
-    screen->screen = calloc((screen->h)*(screen->w)+1, sizeof(*(screen->screen)));
-    memset(screen->screen, blank, screen->h * screen->w);
-    screen->screen[screen->h*screen->w] = '\0';
+    screen->win= calloc((screen->h)*(screen->w)+1, sizeof(*(screen->win)));
 }
 
 void handle_key(int inp, struct snake_s *snake)
