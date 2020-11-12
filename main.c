@@ -200,6 +200,7 @@ MAINLOOP_RESTART_POSITION
     draw_win_brdr(game_win, brd_v, brd_h);
 
     game_state.state = on;
+    game_state.foods = 0;
     game_state.max_food = 1; 
     game_state.max_food_cap = 5; 
     
