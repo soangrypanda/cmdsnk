@@ -203,6 +203,8 @@ MAINLOOP_RESTART_POSITION
     game_state.foods = 0;
     game_state.max_food = 1; 
     game_state.max_food_cap = 5; 
+    game_state.score= 0;
+    game_state.level= 0;
     
     struct snake_part_s *snkprt = calloc(1, sizeof(struct snake_part_s));
     snkprt->next = NULL;
@@ -227,7 +229,7 @@ MAINLOOP_RESTART_POSITION
      
     FILE *fd = fopen("log.txt", "w");
     fd1 = fopen("log.txt", "w");
-    fprintf(fd, "x - %d, y - %d, scr x - %d, scr y - %d\n", win.w , win.h, screen.w, screen.h);
+    //fprintf(fd, "x - %d, y - %d, scr x - %d, scr y - %d\n", win.w , win.h, screen.w, screen.h);
     //fprintf(fd, "x - %d, y - %d, sx - %f, ys - %f, sizeof - %ld\n", screen.w, screen.h, snake.x, snake.y, sizeof((*screen.screen)));
     //fprintf(fd, "x - %d, y - %d, sx - %d, ys - %d\n", x, y, snake.x, snake.y);
 
@@ -379,7 +381,7 @@ void handle_food(struct win_s *scrn)
             declare_game(won);
             return;
         }
-   } 
+    } 
     scrn->win[scrn->w * y + x] = food; 
 }
 
@@ -388,25 +390,70 @@ void declare_game(int what)
     game_state.state = what;
 }
 
+#define in_scope(x,y,scrn) ( ((x)>0)&&((x)<(scrn)->w)&&((y)>0)&&((y)<(scrn)->h) )
+int already_seen(int x, int y, int *xa, int *ya, int len);
+/* --- DECLARATION AND DEFINE ARE HERE ONLY TO BE MOVED TO SEPARATED FILE LATER!!! --- */
 int find_better_cell(int *px, int *py, int x, int y, struct win_s *scrn, int cell_needed)
 {
-    if(x <= scrn->x || x >= scrn->w || y <= scrn->y || y >= scrn->h) {
-        return 0;
-    }
-    if(scrn->win[scrn->w * y + x] == cell_needed) {
-        *px = x; *py = y;
-        return 1;
-    }
+    static int cnt = 0;
+    fprintf(fd1, "COUNT - %d !!! \n", cnt);
+    cnt++;
+    int size = (scrn->w)*(scrn->y);
+    int *xfront = calloc(size, sizeof(*xfront));
+    int *yfront = calloc(size, sizeof(*yfront));
+    int *xseen = calloc(size, sizeof(*xseen));
+    int *yseen = calloc(size, sizeof(*yseen));
+  /* -- TOO BIG ALLOC OVERHEAD - THINK ABOUT OPTIMIZATION -- */ 
 
-    if(find_better_cell(px, py, x+1, y, scrn, cell_needed))
-        return 1;
-    if(find_better_cell(px, py, x-1, y, scrn, cell_needed))
-        return 1;
-    if(find_better_cell(px, py, x, y+1, scrn, cell_needed))
-        return 1;
-    if(find_better_cell(px, py, x, y-1, scrn, cell_needed))
-        return 1;
+    int fc = 0; int fh = 0; 
+    int sc = 0;
+    int ret = 0;
+    for(;;) {
+        fprintf(fd1, "x-%d,y-%d,sc-%d,fc-%d,fh-%d,size-%d,w-%d,h-%d,sx-%d,sy-%d\n", 
+                                    x,y,sc,fc,fh,size,scrn->w,scrn->h,scrn->x,scrn->y);
+        if(scrn->win[scrn->w * y + x] == cell_needed) {
+            *px = x; *py = y; ret = 1; goto cleanup_n_return;
+        }
+        if(sc >= size) {
+            ret = 0;
+            goto cleanup_n_return;
+        }
+        xseen[sc] = x; yseen[sc] = y; ++sc;
+        
+        if((in_scope(x+1,y,scrn)) && (!already_seen(x+1, y, xseen, yseen, sc))) {
+            xfront[fc] = x + 1; yfront[fc] = y; ++fc;    
+        }
+        if((in_scope(x-1,y,scrn)) && (!already_seen(x-1, y, xseen, yseen, sc))) {
+            xfront[fc] = x - 1; yfront[fc] = y; ++fc;    
+        } 
+        if((in_scope(x,y+1,scrn)) && (!already_seen(x, y+1, xseen, yseen, sc))) {
+            xfront[fc] = x; yfront[fc] = y + 1; ++fc;    
+        }
+        if((in_scope(x,y-1,scrn)) && (!already_seen(x, y-1, xseen, yseen, sc))) {
+            xfront[fc] = x; yfront[fc] = y - 1; ++fc;    
+        }
 
+    pop_new_coords:
+        if(fh >= size) {
+            ret = 0;
+            goto cleanup_n_return;
+        }
+        x = xfront[fh]; y = yfront[fh]; ++fh;
+        if(already_seen(x, y, xseen, yseen, sc))
+            goto pop_new_coords; 
+    } 
+
+    cleanup_n_return:
+        free(xfront); free(yfront); free(xseen); free(yseen);
+        return ret;
+}
+
+int already_seen(int x, int y, int *xa, int *ya, int len) 
+{
+    for(int i = 0; i < len; ++i) {
+        if((xa[i] == x) && (ya[i] == y))
+            return 1;
+    }
     return 0;
 }
 
