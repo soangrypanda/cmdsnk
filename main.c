@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <time.h>
 
+#include "elpsd_t.h"
 
 FILE *fd1; 
 
@@ -134,7 +134,6 @@ void initcurses(void);
 void init_mainscreen(struct win_s *screen);
 void handle_key(int inp, struct snake_s * snake);
 void handle_food(struct win_s *gs);
-float get_elapsed_time(struct timespec *t1, struct timespec *t2);
 void handle_snake_collision(struct snake_s *snake, struct win_s *screen);
 void enlen_snake(struct snake_s *snake);
 void handle_snake_speed(struct snake_s *snake);
@@ -190,8 +189,6 @@ int main(void)
 
     //struct snake_part_s snkprt = { 0 };
     struct snake_s snake = { 0 };
-    struct timespec t1 = { 0 };
-    struct timespec t2 = { 0 };
 
 MAINLOOP_RESTART_POSITION
 
@@ -234,13 +231,10 @@ MAINLOOP_RESTART_POSITION
     //fprintf(fd, "x - %d, y - %d, sx - %d, ys - %d\n", x, y, snake.x, snake.y);
 
 
-    clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
-    clock_gettime(CLOCK_MONOTONIC_RAW, &t2);
-    
+    set_timer();
+ 
     while(game_state.state == on) {
-        clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
-        game_state.elapsed_time = get_elapsed_time(&t1, &t2);        
-        memcpy(&t2, &t1, sizeof(t1));
+        game_state.elapsed_time = get_elapsed_time();        
         //fprintf(fd, "et = %f\n", elapsed_time);
  
         handle_key(getch(), &snake);
@@ -457,10 +451,6 @@ int already_seen(int x, int y, int *xa, int *ya, int len)
     return 0;
 }
 
-float get_elapsed_time(struct timespec *t1, struct timespec *t2)
-{
-    return (float)(t1->tv_sec-t2->tv_sec) + (float)(t1->tv_nsec-t2->tv_nsec)*1e-9;
-}
 
 void handle_snake_collision(struct snake_s *snake, struct win_s *screen) {
     if(collide(snake->nx, snake->ny, (*screen), brd_v) || 
