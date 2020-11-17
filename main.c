@@ -5,34 +5,14 @@
 #include <string.h>
 
 #include "elpsd_t.h"
-
+#include "txt_mod.h"
+#include "texts.h"
 FILE *fd1; 
 
 #define collide(ox, oy, scr, cell) (scr.win[scr.w * (int)oy+(int)ox]==cell)
 
 #define need_to_add_food(gs) ((gs)->foods < (gs)->max_food)
 #define change_food_cntr(gs, how) (((gs)->foods)how)
-
-#define update_txt(...) sprintf( __VA_ARGS__ );
-#define init_txt(obj, width)      \
-        struct txt_s obj = { 0 }; \
-        obj.w = width;            \
-        obj.txt = malloc(obj.w)  
-#define mv_txt(txt, tx, ty);      \
-        (txt)->x = tx;            \
-        (txt)->y = ty               
-#define SCORE_TXT "score: %04d"
-#define SCORE_TXT_W (sizeof(SCORE_TXT)+4)
-#define LEVEL_TXT "level: %04d"
-#define LEVEL_TXT_W (sizeof(LEVEL_TXT)+4)
-#define TITLE_TXT "CMDSNK by soangrypanda"
-#define TITLE_TXT_W (sizeof(TITLE_TXT))
-#define G_WON_TXT "YOU WON CMDSNK!"
-#define G_WON_TXT_W (sizeof(G_WON_TXT))
-#define G_LOS_TXT "G, MORE LUCK NEXT TIME!"
-#define G_LOS_TXT_W (sizeof(G_LOS_TXT))
-#define RETRY_TXT "RETRY? y / n"
-#define RETRY_TXT_W (sizeof(RETRY_TXT))
 
 #define SNAKE_SPEED_INCR_STRIDE 2 
 /* --- NEED TO THINK ABOUT POSSIBILITY OF DRAWING WINS SEPARATELLY --- */
@@ -94,20 +74,12 @@ struct game_state_s game_state = { 0 };
 int scx, scy, lvx, lvy, tlx, tly;
 unsigned int ui_score_win_h = 1;
 
-struct screen_s {
-    char *screen; 
-    int w, h;
-};
 
 struct win_s {
     char *win;
     int w, h, x, y;
 };
 
-struct txt_s {
-    char *txt;
-    int x, y, w;
-};
 
 struct snake_part_s {
     struct snake_part_s *next;
