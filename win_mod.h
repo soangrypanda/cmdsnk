@@ -2,6 +2,7 @@
 #define CMDSNK_WIN_MOD_H_SENTRY
 
 #include <string.h>
+#include <curses.h>
 /* some includes are in case macros are rewriten as functions */
 
 /* --- NEED TO THINK ABOUT POSSIBILITY OF DRAWING WINS SEPARATELLY --- */
@@ -33,6 +34,13 @@ struct win_s {
 #define fill_win_with(what, where)                      \
     memset((where)->win, what, (where)->h * (where)->w);\
     (where)->win[(where)->h*(where)->w] = '\0'
+
+void init_mainscreen(struct win_s *screen)
+{
+    screen->x = screen->y = 0;
+    getmaxyx(stdscr, screen->h, screen->w);
+    screen->win= calloc((screen->h)*(screen->w)+1, sizeof(*(screen->win)));
+}
 
 
 #endif

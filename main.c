@@ -63,8 +63,6 @@ enum snake_dir {up, left, down, right, none};
 
 void initcurses(void);
 
-void init_mainscreen(struct win_s *screen);
-
 void handle_key(int inp, struct snake_s * snake);
 
 void handle_snake_collision(struct snake_s *snake, struct win_s *screen);
@@ -247,12 +245,6 @@ void initcurses(void)
     cbreak();
     keypad(stdscr, 1); 
     timeout(0);
-}
-void init_mainscreen(struct win_s *screen)
-{
-    screen->x = screen->y = 0;
-    getmaxyx(stdscr, screen->h, screen->w);
-    screen->win= calloc((screen->h)*(screen->w)+1, sizeof(*(screen->win)));
 }
 
 void handle_key(int inp, struct snake_s *snake)
