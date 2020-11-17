@@ -8,16 +8,18 @@
 #include "txt_mod.h"
 #include "texts.h"
 #include "win_mod.h"
+#include "rand_mod.h"
+#include "cell_mod.h"
+
+#include "cmdsnk_food.h"
+#include "cmdsnk_gamestate.h"
+
 FILE *fd1; 
 
 #define collide(ox, oy, scr, cell) (scr.win[scr.w * (int)oy+(int)ox]==cell)
 
-#define need_to_add_food(gs) ((gs)->foods < (gs)->max_food)
-#define change_food_cntr(gs, how) (((gs)->foods)how)
-
 #define SNAKE_SPEED_INCR_STRIDE 2 
 
-#define draw_cell(wind, x, y, cont) ((wind).win[(wind).w * (y) + (x)] = cont)
 
 #define MAINLOOP_RESTART_POSITION restart_pos:
 #define RESTART_MAINLOOP goto restart_pos
@@ -35,16 +37,6 @@ FILE *fd1;
     }                                       \
     } while(0)
 
-unsigned int seed;  
-
-struct game_state_s {
-    float elapsed_time;
-    int score;
-    int level;
-    int foods, max_food, max_food_cap;
-    enum state_t { won, lost, on, ext } state;
-};
-struct game_state_s game_state = { 0 };
 
 int scx, scy, lvx, lvy, tlx, tly;
 unsigned int ui_score_win_h = 1;
@@ -68,25 +60,23 @@ struct snake_s {
 
 enum snake_dir {up, left, down, right, none};
 
-enum cells {blank = '.', s_head = '@', s_bdy = '0', food = '^', brd_h = '-', brd_v = '|'};
-
 
 void initcurses(void);
+
 void init_mainscreen(struct win_s *screen);
+
 void handle_key(int inp, struct snake_s * snake);
-void handle_food(struct win_s *gs);
+
 void handle_snake_collision(struct snake_s *snake, struct win_s *screen);
 void enlen_snake(struct snake_s *snake);
 void handle_snake_speed(struct snake_s *snake);
 void mv_snake(struct snake_part_s *snkprt, float x, float y, struct win_s *win);
 void delete_snake(struct snake_s *snake);
-void update_game_state();
-int find_better_cell(int *px, int *py, int x, int y, struct win_s *scrn, int cell_needed);
-void declare_game(int what);
+
 
 int main(void)
 {
-    seed = time(NULL);
+    init_rand();
     initcurses();
 
     struct win_s screen = { 0 };
@@ -214,7 +204,7 @@ MAINLOOP_RESTART_POSITION
         refresh();
     }
     
-delete_snake(&snake);
+    delete_snake(&snake);
     switch(game_state.state) {
         case(ext):
             break;
@@ -307,90 +297,9 @@ void handle_key(int inp, struct snake_s *snake)
             break;
     }
 }
-void handle_food(struct win_s *scrn)
-{
-    int x = 1 + rand_r(&seed) / (RAND_MAX  / (scrn->w - 2)) ;
-    int y = 1 + rand_r(&seed) / (RAND_MAX  / (scrn->h - 2)) ;
-    if(scrn->win[scrn->w * y + x] != blank) {
-        if(0 == find_better_cell(&x, &y, x, y, scrn, blank)) {
-            declare_game(won);
-            return;
-        }
-    } 
-    scrn->win[scrn->w * y + x] = food; 
-}
 
-void declare_game(int what) 
-{
-    game_state.state = what;
-}
 
-#define in_scope(x,y,scrn) ( ((x)>0)&&((x)<(scrn)->w)&&((y)>0)&&((y)<(scrn)->h) )
-int already_seen(int x, int y, int *xa, int *ya, int len);
-/* --- DECLARATION AND DEFINE ARE HERE ONLY TO BE MOVED TO SEPARATED FILE LATER!!! --- */
-int find_better_cell(int *px, int *py, int x, int y, struct win_s *scrn, int cell_needed)
-{
-    static int cnt = 0;
-    fprintf(fd1, "COUNT - %d !!! \n", cnt);
-    cnt++;
-    int size = (scrn->w)*(scrn->y);
-    int *xfront = calloc(size, sizeof(*xfront));
-    int *yfront = calloc(size, sizeof(*yfront));
-    int *xseen = calloc(size, sizeof(*xseen));
-    int *yseen = calloc(size, sizeof(*yseen));
-  /* -- TOO BIG ALLOC OVERHEAD - THINK ABOUT OPTIMIZATION -- */ 
 
-    int fc = 0; int fh = 0; 
-    int sc = 0;
-    int ret = 0;
-    for(;;) {
-        fprintf(fd1, "x-%d,y-%d,sc-%d,fc-%d,fh-%d,size-%d,w-%d,h-%d,sx-%d,sy-%d\n", 
-                                    x,y,sc,fc,fh,size,scrn->w,scrn->h,scrn->x,scrn->y);
-        if(scrn->win[scrn->w * y + x] == cell_needed) {
-            *px = x; *py = y; ret = 1; goto cleanup_n_return;
-        }
-        if(sc >= size) {
-            ret = 0;
-            goto cleanup_n_return;
-        }
-        xseen[sc] = x; yseen[sc] = y; ++sc;
-        
-        if((in_scope(x+1,y,scrn)) && (!already_seen(x+1, y, xseen, yseen, sc))) {
-            xfront[fc] = x + 1; yfront[fc] = y; ++fc;    
-        }
-        if((in_scope(x-1,y,scrn)) && (!already_seen(x-1, y, xseen, yseen, sc))) {
-            xfront[fc] = x - 1; yfront[fc] = y; ++fc;    
-        } 
-        if((in_scope(x,y+1,scrn)) && (!already_seen(x, y+1, xseen, yseen, sc))) {
-            xfront[fc] = x; yfront[fc] = y + 1; ++fc;    
-        }
-        if((in_scope(x,y-1,scrn)) && (!already_seen(x, y-1, xseen, yseen, sc))) {
-            xfront[fc] = x; yfront[fc] = y - 1; ++fc;    
-        }
-
-    pop_new_coords:
-        if(fh >= size) {
-            ret = 0;
-            goto cleanup_n_return;
-        }
-        x = xfront[fh]; y = yfront[fh]; ++fh;
-        if(already_seen(x, y, xseen, yseen, sc))
-            goto pop_new_coords; 
-    } 
-
-    cleanup_n_return:
-        free(xfront); free(yfront); free(xseen); free(yseen);
-        return ret;
-}
-
-int already_seen(int x, int y, int *xa, int *ya, int len) 
-{
-    for(int i = 0; i < len; ++i) {
-        if((xa[i] == x) && (ya[i] == y))
-            return 1;
-    }
-    return 0;
-}
 
 
 void handle_snake_collision(struct snake_s *snake, struct win_s *screen) {
@@ -452,14 +361,4 @@ void delete_snake(struct snake_s *snake)
         free(tmp);
     } 
     snake->head = snake->tail = NULL; 
-}
-
-void update_game_state()
-{
-    if(game_state.score % 10 == 0) {
-        game_state.level++;
-        if(game_state.max_food < game_state.max_food_cap) {
-            game_state.max_food++;
-        }
-    }
 }
