@@ -7,6 +7,7 @@
 #include "elpsd_t.h"
 #include "txt_mod.h"
 #include "texts.h"
+#include "win_mod.h"
 FILE *fd1; 
 
 #define collide(ox, oy, scr, cell) (scr.win[scr.w * (int)oy+(int)ox]==cell)
@@ -15,32 +16,6 @@ FILE *fd1;
 #define change_food_cntr(gs, how) (((gs)->foods)how)
 
 #define SNAKE_SPEED_INCR_STRIDE 2 
-/* --- NEED TO THINK ABOUT POSSIBILITY OF DRAWING WINS SEPARATELLY --- */
-#define init_win(wind, wx, wy, ww, wh, scrn)\
-    struct win_s wind = { 0 };              \
-    wind.x = wx;                            \
-    wind.y = wy;                            \
-    wind.w = ww;                            \
-    wind.h = wh;                            \
-    wind.win = &((scrn)->win[wy*((scrn)->w)+wx])
-    //wind.win =  calloc((wind.w) * (wind.h) + 1, sizeof(*(wind.win)));
-    //memset(wind.win, blank, wind.w*wind.h)
-
-#define draw_win_brdr(wind, bv, bh)                     \
-    for(int h = 0; h < wind.h; ++h) {                   \
-        wind.win[h * wind.w] = bv;                      \
-        wind.win[h * wind.w + wind.w - 1] = bv;         \
-    }                                                   \
-    for(int w = 0; w < wind.w; ++w) {                   \
-        wind.win[w] = bh;                               \
-        wind.win[wind.w * wind.h - wind.w + w] = bh;    \
-    }                                                   \
-    wind.win[wind.w*wind.h] = '\0'
-
-
-#define fill_win_with(what, where)                      \
-    memset((where)->win, what, (where)->h * (where)->w);\
-    (where)->win[(where)->h*(where)->w] = '\0'
 
 #define draw_cell(wind, x, y, cont) ((wind).win[(wind).w * (y) + (x)] = cont)
 
@@ -73,12 +48,6 @@ struct game_state_s game_state = { 0 };
 
 int scx, scy, lvx, lvy, tlx, tly;
 unsigned int ui_score_win_h = 1;
-
-
-struct win_s {
-    char *win;
-    int w, h, x, y;
-};
 
 
 struct snake_part_s {
