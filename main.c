@@ -16,16 +16,8 @@
 #include "cmdsnk_gamestate.h"
 #include "cmdsnk_snake.h"
 
-FILE *fd1; 
-
-
-int scx, scy, lvx, lvy, tlx, tly;
-unsigned int ui_score_win_h = 1;
-
-
 
 void initcurses(void);
-
 void handle_key(int inp, struct snake_s * snake);
 
 
@@ -73,7 +65,6 @@ int main(void)
     init_win(game_win, 0, win.h, screen.w, screen.h-game_win.y, &screen);
 
 
-    //struct snake_part_s snkprt = { 0 };
     struct snake_s snake = { 0 };
 
 MAINLOOP_RESTART_POSITION
@@ -109,19 +100,11 @@ MAINLOOP_RESTART_POSITION
     snake.dir = none; 
     
     draw_cell(game_win, (int)snkprt->x, (int)snkprt->y, snkprt->bdy);
-     
-    FILE *fd = fopen("log.txt", "w");
-    fd1 = fopen("log.txt", "w");
-    //fprintf(fd, "x - %d, y - %d, scr x - %d, scr y - %d\n", win.w , win.h, screen.w, screen.h);
-    //fprintf(fd, "x - %d, y - %d, sx - %f, ys - %f, sizeof - %ld\n", screen.w, screen.h, snake.x, snake.y, sizeof((*screen.screen)));
-    //fprintf(fd, "x - %d, y - %d, sx - %d, ys - %d\n", x, y, snake.x, snake.y);
-
 
     set_timer();
  
     while(game_state.state == on) {
         game_state.elapsed_time = get_elapsed_time();        
-        //fprintf(fd, "et = %f\n", elapsed_time);
  
         handle_key(getch(), &snake);
 
@@ -129,10 +112,6 @@ MAINLOOP_RESTART_POSITION
             handle_food(&game_win);
             change_food_cntr(&game_state, ++);
         }
-
-        //fprintf(fd, "%d - %d\n", game_state.foods, game_state.max_food);
-
-        //draw_cell(game_win, (int)snkprt.x, (int)snkprt.y, blank);
 
         snake.nx += snake.vx * game_state.elapsed_time;
         snake.ny += snake.vy * game_state.elapsed_time; 
@@ -143,15 +122,9 @@ MAINLOOP_RESTART_POSITION
             mv_snake(snake.head, snake.nx, snake.ny, &game_win);
         snake.be_moved = 0;
             
-        //draw_cell(game_win, (int)snkprt.x, (int)snkprt.y, snkprt.bdy);
-
-        //update_game_state(&game_state);
-
         update_txt(score.txt, SCORE_TXT, game_state.score); 
         update_txt(level.txt, LEVEL_TXT, game_state.level); 
 
-        //mvaddstr(win.y, win.x, win.win);
-        //mvaddstr(game_win.y, game_win.x, game_win.win);
         mvaddstr(0, 0, screen.win);
         mvaddstr(score.y,score.x,score.txt);
         mvaddstr(level.y,level.x,level.txt);
@@ -161,8 +134,6 @@ MAINLOOP_RESTART_POSITION
     
     delete_snake(&snake);
     switch(game_state.state) {
-        case(ext):
-            break;
         case(won):
             mvaddstr(g_won.y, g_won.x, g_won.txt);        
             mvaddstr(retry.y, retry.x, retry.txt);        
@@ -171,6 +142,7 @@ MAINLOOP_RESTART_POSITION
             mvaddstr(g_los.y, g_los.x, g_los.txt);        
             mvaddstr(retry.y, retry.x, retry.txt);        
             break;
+        case(ext):
         case(on):
         default:
             break;
@@ -180,8 +152,6 @@ MAINLOOP_RESTART_POSITION
         ASK_FOR_RESTART;
 
     free(screen.win);
-    //free(win.win);
-    //free(game_win.win);
 
     free(score.txt);
     free(level.txt);
