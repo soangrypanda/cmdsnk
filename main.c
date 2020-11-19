@@ -10,29 +10,13 @@
 #include "win_mod.h"
 #include "rand_mod.h"
 #include "cell_mod.h"
+#include "mainloop_mod.h"
 
 #include "cmdsnk_food.h"
 #include "cmdsnk_gamestate.h"
 #include "cmdsnk_snake.h"
 
 FILE *fd1; 
-
-
-#define MAINLOOP_RESTART_POSITION restart_pos:
-#define RESTART_MAINLOOP goto restart_pos
-#define ASK_FOR_RESTART do {                \
-    timeout(-1);                            \
-    int k;                                  \
-    while( (k = getch()) ) {                \
-        if(k == 'y' || k == 'Y') {          \
-            timeout(0);                     \
-            RESTART_MAINLOOP;               \
-        }                                   \
-        else if(k == 'n' || k == 'N') {     \
-            break;                          \
-        }                                   \
-    }                                       \
-    } while(0)
 
 
 int scx, scy, lvx, lvy, tlx, tly;
