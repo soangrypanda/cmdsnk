@@ -16,3 +16,13 @@ void declare_game(int what)
 {   
     game_state.state = what;
 }
+
+void reset_gamestate(void)
+{
+    game_state.state = on;
+    game_state.foods = 0; 
+    game_state.max_food = 1;  
+    game_state.max_food_cap = 5;
+    game_state.score= 0;
+    game_state.level= 0;
+}

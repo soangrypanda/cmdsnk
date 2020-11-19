@@ -12,9 +12,11 @@ struct game_state_s {
 
 extern struct game_state_s game_state;
 
-enum cells {blank = '.', s_head = '@', s_bdy = '0', food = '^', brd_h = '-', brd_v = '|'};
+enum cells { blank = '.', s_head = '@', s_bdy = '0', s_dead = 'X',
+             food = '^', brd_h = '-', brd_v = '|' };
 
 void update_game_state();
 void declare_game(int what);
+void reset_gamestate(void);
 
 #endif

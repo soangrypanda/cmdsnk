@@ -42,6 +42,9 @@ int main(void)
     init_txt(retry, RETRY_TXT_W);
     update_txt(retry.txt, RETRY_TXT); 
 
+/* if I would rewrite this ugly peace below later then don't forget
+ * to increase abstartion level and make functions not ad hoc and
+ * actually usable in other places too */
     int win_h = 6;
     if(score.w+level.w+title.w< screen.w-2) 
         win_h = 4; 
@@ -63,40 +66,16 @@ int main(void)
 
     init_win(game_win, 0, win.h, screen.w, screen.h-game_win.y, &screen);
 
-
-    struct snake_s snake = { 0 };
-
 MAINLOOP_RESTART_POSITION
 
     fill_win_with(blank, &screen);
     draw_win_brdr(win, brd_v, brd_h);
     draw_win_brdr(game_win, brd_v, brd_h);
 
-    game_state.state = on;
-    game_state.foods = 0;
-    game_state.max_food = 1; 
-    game_state.max_food_cap = 5; 
-    game_state.score= 0;
-    game_state.level= 0;
+    reset_gamestate();
     
-    struct snake_part_s *snkprt = calloc(1, sizeof(struct snake_part_s));
-    snkprt->next = NULL;
-    snkprt->x = game_win.w / 2;
-    snkprt->y = game_win.h / 2;
-    snkprt->bdy = s_head;
-
-    snake.head = snkprt;
-    snake.tail = snkprt;
-    snake.vx = 0;
-    snake.vy = 0;
-    snake.cvx = 12;
-    snake.cvy = 8;
-    snake.dvx = 1;
-    snake.dvy = 0.6;
-    snake.nx = snkprt->x; 
-    snake.ny = snkprt->y;
-    snake.be_moved = 0;
-    snake.dir = none; 
+    init_snkprt(snkprt, game_win);
+    init_snake(snake, snkprt);
     
     draw_cell(game_win, (int)snkprt->x, (int)snkprt->y, snkprt->bdy);
 
@@ -105,21 +84,16 @@ MAINLOOP_RESTART_POSITION
     while(game_state.state == on) {
         game_state.elapsed_time = get_elapsed_time();        
  
-        handle_key(getch(), &snake);
+        handle_key(getch(), snake);
 
         if(need_to_add_food(&game_state)) {
             handle_food(&game_win);
             change_food_cntr(&game_state, ++);
         }
 
-        snake.nx += snake.vx * game_state.elapsed_time;
-        snake.ny += snake.vy * game_state.elapsed_time; 
-        handle_snake_collision(&snake, &game_win);
-        if(((int)snake.nx != (int)snake.head->x) || ((int)snake.ny != (int)snake.head->y))
-            snake.be_moved = 1;
-        if(snake.be_moved)
-            mv_snake(snake.head, snake.nx, snake.ny, &game_win);
-        snake.be_moved = 0;
+        update_snake_new_coords(snake, game_state.elapsed_time);
+        handle_snake_collision(snake, &game_win);
+        handle_snake_movement(snake, &game_win);
             
         update_txt(score.txt, SCORE_TXT, game_state.score); 
         update_txt(level.txt, LEVEL_TXT, game_state.level); 
@@ -131,13 +105,13 @@ MAINLOOP_RESTART_POSITION
         refresh();
     }
     
-    delete_snake(&snake);
     switch(game_state.state) {
         case(won):
             mvaddstr(g_won.y, g_won.x, g_won.txt);        
             mvaddstr(retry.y, retry.x, retry.txt);        
             break;
         case(lost):
+            kill_snake(snake, &game_win);
             mvaddstr(g_los.y, g_los.x, g_los.txt);        
             mvaddstr(retry.y, retry.x, retry.txt);        
             break;
@@ -146,6 +120,7 @@ MAINLOOP_RESTART_POSITION
         default:
             break;
     }
+    delete_snake(snake);
 
     if(game_state.state != ext)
         ASK_FOR_RESTART;

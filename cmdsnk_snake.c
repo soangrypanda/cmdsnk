@@ -24,6 +24,15 @@ void handle_snake_collision(struct snake_s *snake, struct win_s *screen) {
     } 
 } 
 
+void handle_snake_movement(struct snake_s *snake, struct win_s *win)
+{
+    if(((int)snake->nx != (int)snake->head->x) || ((int)snake->ny != (int)snake->head->y))
+        snake->be_moved = 1;
+    if(snake->be_moved)
+        mv_snake(snake->head, snake->nx, snake->ny, win);
+    snake->be_moved = 0;
+}
+
 void enlen_snake(struct snake_s *snake)
 {   
     struct snake_part_s *tmp = calloc(1, sizeof(*tmp));
@@ -36,7 +45,8 @@ void enlen_snake(struct snake_s *snake)
     snake->tail = tmp;
 }
 
-void mv_snake(struct snake_part_s *snkprt, float x, float y, struct win_s *win) {
+void mv_snake(struct snake_part_s *snkprt, float x, float y, struct win_s *win)
+{
     draw_cell(*win, (int)snkprt->x, (int)snkprt->y, blank);
     if(snkprt->next)
         mv_snake(snkprt->next, snkprt->x, snkprt->y, win);
@@ -61,5 +71,21 @@ void delete_snake(struct snake_s *snake)
         snake->head = snake->head->next;
         free(tmp);
     }
-    snake->head = snake->tail = NULL;
+    free(snake);
+    snake = NULL;
+}
+
+void update_snake_new_coords(struct snake_s *snake, float et)
+{
+    snake->nx += snake->vx * et;
+    snake->ny += snake->vy * et;
+}
+
+void kill_snake(struct snake_s *snake, struct win_s *win)
+{
+    struct snake_part_s *tmp = snake->head;
+    while(tmp) {
+        mvaddch(win->y+(int)tmp->y, win->x+(int)tmp->x, s_dead);
+        tmp = tmp->next;
+    }
 }
