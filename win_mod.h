@@ -35,7 +35,11 @@ struct win_s {
     memset((where)->win, what, (where)->h * (where)->w);\
     (where)->win[(where)->h*(where)->w] = '\0'
 
-void init_mainscreen(struct win_s *screen);
+#define init_mainscreen(screen)                         \
+    struct win_s screen = { 0 };                        \
+    screen.x = screen.y = 0;                            \
+    getmaxyx(stdscr, screen.h, screen.w);               \
+    screen.win= calloc((screen.h)*(screen.w)+1, sizeof(*(screen.win)));
 
 
 #endif

@@ -26,8 +26,7 @@ int main(void)
     init_rand();
     initcurses();
 
-    struct win_s screen = { 0 };
-    init_mainscreen(&screen);
+    init_mainscreen(screen);
     
     init_txt(score, sizeof(SCORE_TXT) + 2);
     update_txt(score.txt, SCORE_TXT, game_state.score); 
