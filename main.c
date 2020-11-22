@@ -63,8 +63,9 @@ int main(void)
     mv_txt(&g_won, screen.w / 2 - g_won.w / 2, screen.h / 2);
     mv_txt(&g_los, screen.w / 2 - g_los.w / 2, screen.h / 2);
     mv_txt(&retry, screen.w / 2 - retry.w / 2, screen.h / 2 + 1);
-
+    FILE *fd = fopen("log.txt", "w+");
     init_win(game_win, 0, win.h, screen.w, screen.h-game_win.y, &screen);
+    fprintf(fd, "w = %d, h = %d\n", game_win.w, game_win.h);
 
 MAINLOOP_RESTART_POSITION
 
@@ -86,15 +87,14 @@ MAINLOOP_RESTART_POSITION
  
         handle_key(getch(), snake);
 
-        if(need_to_add_food(&game_state)) {
-            handle_food(&game_win);
-            change_food_cntr(&game_state, ++);
-        }
-
         update_snake_new_coords(snake, game_state.elapsed_time);
         handle_snake_collision(snake, &game_win);
         handle_snake_movement(snake, &game_win);
             
+        while(need_to_add_food(&game_state)) {
+            handle_food(&game_win);
+        }
+
         update_txt(score.txt, SCORE_TXT, game_state.score); 
         update_txt(level.txt, LEVEL_TXT, game_state.level); 
 
@@ -120,6 +120,7 @@ MAINLOOP_RESTART_POSITION
         default:
             break;
     }
+    cell_mod_cleanup();
     delete_snake(snake);
 
     if(game_state.state != ext)

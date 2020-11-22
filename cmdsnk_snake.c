@@ -13,14 +13,14 @@ void handle_snake_collision(struct snake_s *snake, struct win_s *screen) {
 
         snake->vx = 0; snake->vy = 0; 
         snake->be_moved = 0; 
-        declare_game(lost); 
+        //declare_game(lost); 
     } 
     else if(collide(snake->nx, snake->ny, (*screen), food)) { 
         game_state.score++; 
         change_food_cntr(&game_state, --); 
         enlen_snake(snake); 
         update_game_state(); 
-        handle_snake_speed(snake); 
+        //handle_snake_speed(snake); 
     } 
 } 
 

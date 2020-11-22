@@ -1,4 +1,4 @@
-OBJECTS=cmdsnk_gamestate.o cmdsnk_snake.o cmdsnk_food.o rand_mod.o win_mod.o cell_mod.o
+OBJECTS=cmdsnk_gamestate.o cmdsnk_snake.o cmdsnk_food.o rand_mod.o win_mod.o cell_mod.o err_mod.o
 HEADERS=elpsd_t.h txt_mod.h win_mod.h cmdsnk_food.h cmdsnk_gamestate.h cmdsnk_snake.h
 CFLAGS= -g -Wall
 CLIBS=-lncurses
@@ -16,6 +16,8 @@ win_mod.o: win_mod.c $(HEADERS)
 	gcc $(CFLAGS) win_mod.c -c $(CLIBS)
 cell_mod.o: cell_mod.c $(HEADERS) 
 	gcc $(CFLAGS) cell_mod.c -c $(CLIBS)
+err_mod.o: err_mod.c $(HEADERS) 
+	gcc $(CFLAGS) err_mod.c -c $(CLIBS)
     
 
 clean:
