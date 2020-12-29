@@ -17,6 +17,7 @@ $(OBJ): $(OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS) | $(OBJDIR)
 $(OBJDIR):
 	mkdir $(OBJDIR)
 
+.PHONY: clean
 clean:
 	rm -f log* cmdsnk
 	rm -fr $(OBJDIR) 
